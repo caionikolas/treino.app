@@ -11,6 +11,9 @@ export type WorkoutStackParamList = {
   WorkoutForm: { mode: 'new' } | { mode: 'edit'; id: string };
   ExercisePicker: undefined;
   ExerciseInWorkout: { index: number };
+  WorkoutPreview: { id: string };
+  WorkoutExecution: undefined;
+  WorkoutSummary: undefined;
 };
 
 const Stack = createNativeStackNavigator<WorkoutStackParamList>();
