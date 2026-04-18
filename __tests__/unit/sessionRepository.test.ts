@@ -119,4 +119,33 @@ describe('sessionRepository', () => {
     const sessions = await sessionRepository.findRecent();
     expect(sessions.length).toBe(1);
   });
+
+  it('findByDateRange returns sessions within range ordered desc', async () => {
+    await sessionRepository.insert(makeSession({ id: 's-1', startedAt: 1_000_000 }), []);
+    await sessionRepository.insert(makeSession({ id: 's-2', startedAt: 2_000_000 }), []);
+    await sessionRepository.insert(makeSession({ id: 's-3', startedAt: 3_000_000 }), []);
+
+    const result = await sessionRepository.findByDateRange(1_500_000, 2_500_000);
+    expect(result.map(s => s.id)).toEqual(['s-2']);
+
+    const all = await sessionRepository.findByDateRange(0, 5_000_000);
+    expect(all.map(s => s.id)).toEqual(['s-3', 's-2', 's-1']);
+  });
+
+  it('findDatesWithSessions returns distinct YYYY-MM-DD strings', async () => {
+    const d1 = new Date('2026-03-15T10:00:00Z').getTime();
+    const d1b = new Date('2026-03-15T20:00:00Z').getTime();
+    const d2 = new Date('2026-03-20T05:00:00Z').getTime();
+
+    await sessionRepository.insert(makeSession({ id: 's-1', startedAt: d1 }), []);
+    await sessionRepository.insert(makeSession({ id: 's-2', startedAt: d1b }), []);
+    await sessionRepository.insert(makeSession({ id: 's-3', startedAt: d2 }), []);
+
+    const dates = await sessionRepository.findDatesWithSessions(
+      new Date('2026-03-01').getTime(),
+      new Date('2026-04-01').getTime(),
+    );
+    expect(dates.length).toBe(2);
+    dates.forEach(d => expect(d).toMatch(/^\d{4}-\d{2}-\d{2}$/));
+  });
 });

@@ -66,4 +66,25 @@ export const sessionRepository = {
     );
     return (result.rows ?? []).map(r => rowToSession(r as unknown as SessionRow));
   },
+
+  async findByDateRange(startMs: number, endMs: number): Promise<WorkoutSession[]> {
+    const db = getDb();
+    const result = await db.execute(
+      'SELECT * FROM workout_sessions WHERE started_at >= ? AND started_at < ? ORDER BY started_at DESC',
+      [startMs, endMs],
+    );
+    return (result.rows ?? []).map(r => rowToSession(r as unknown as SessionRow));
+  },
+
+  async findDatesWithSessions(startMs: number, endMs: number): Promise<string[]> {
+    const db = getDb();
+    const result = await db.execute(
+      `SELECT DISTINCT date(started_at / 1000, 'unixepoch', 'localtime') AS day
+       FROM workout_sessions
+       WHERE started_at >= ? AND started_at < ?
+       ORDER BY day DESC`,
+      [startMs, endMs],
+    );
+    return (result.rows ?? []).map(r => (r as any).day as string);
+  },
 };
