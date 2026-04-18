@@ -5,6 +5,7 @@ import { AppNavigator } from '@/navigation/AppNavigator';
 import { runMigrations } from '@/database/migrations';
 import { runSeeds } from '@/database/seeds/runSeeds';
 import { useExerciseStore } from '@/store/useExerciseStore';
+import { setupNotificationChannel } from '@/services/notificationService';
 import { colors } from '@/theme';
 
 function App(): React.JSX.Element {
@@ -18,6 +19,7 @@ function App(): React.JSX.Element {
         await runMigrations();
         await runSeeds();
         await loadExercises();
+        await setupNotificationChannel();
         setReady(true);
       } catch (e) {
         console.error('Bootstrap failed', e);
