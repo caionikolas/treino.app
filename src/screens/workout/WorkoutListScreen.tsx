@@ -15,6 +15,7 @@ export function WorkoutListScreen({ navigation }: Props) {
   const load = useWorkoutStore(s => s.load);
   const duplicate = useWorkoutStore(s => s.duplicate);
   const remove = useWorkoutStore(s => s.remove);
+  const toggleFavorite = useWorkoutStore(s => s.toggleFavorite);
 
   useEffect(() => {
     load();
@@ -57,8 +58,9 @@ export function WorkoutListScreen({ navigation }: Props) {
         renderItem={({ item }) => (
           <WorkoutCard
             workout={item}
-            onPress={() => navigation.navigate('WorkoutForm', { mode: 'edit', id: item.id })}
+            onPress={() => navigation.navigate('WorkoutPreview', { id: item.id })}
             onLongPress={() => openMenu(item.id, item.name)}
+            onToggleFavorite={() => toggleFavorite(item.id)}
           />
         )}
         contentContainerStyle={styles.list}
