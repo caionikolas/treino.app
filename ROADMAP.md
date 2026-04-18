@@ -43,11 +43,14 @@ Cronômetro geral, timer de descanso com vibração + som + notificação (via `
 
 ---
 
-## ⏳ Fase 5 — Histórico e evolução
+## ✅ Fase 5 — Histórico + Estatísticas básicas
 
-Lista de sessões realizadas, detalhe de cada sessão, gráficos de evolução de carga por exercício, recordes pessoais (PRs), estatísticas gerais.
+Calendário mensal com dias marcados, lista de sessões por dia, detalhe da sessão (exercícios + séries + botão "Repetir treino"), aba de estatísticas (treinos do mês, frequência semanal, duração média). Escopo reduzido: sem gráficos de evolução, sem PRs.
 
-**Referência:** `CLAUDE.md` seção "Histórico e Evolução".
+**Status:** Concluída (2026-04-19)
+**Spec:** `docs/superpowers/specs/2026-04-19-historico-estatisticas-design.md`
+**Plano:** `docs/superpowers/plans/2026-04-19-historico-estatisticas.md`
+**Backlog:** gráficos de evolução e PRs ficaram pra uma fase 5.5 futura se precisar.
 
 ---
 
