@@ -3,12 +3,12 @@ import { DarkTheme, NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ExerciseStack } from './ExerciseStack';
+import { WorkoutStack } from './WorkoutStack';
 import { ComingSoonScreen } from '@/screens/placeholders/ComingSoonScreen';
 import { colors } from '@/theme';
 
 const Tab = createBottomTabNavigator();
 
-const WorkoutsPlaceholder = () => <ComingSoonScreen title="Treinos" />;
 const HistoryPlaceholder = () => <ComingSoonScreen title="Histórico" />;
 const MusicPlaceholder = () => <ComingSoonScreen title="Música" />;
 
@@ -45,7 +45,7 @@ export function AppNavigator() {
           },
         })}
       >
-        <Tab.Screen name="Workouts" component={WorkoutsPlaceholder} options={{ title: 'Treinos' }} />
+        <Tab.Screen name="Workouts" component={WorkoutStack} options={{ title: 'Treinos' }} />
         <Tab.Screen name="Exercises" component={ExerciseStack} options={{ title: 'Exercícios' }} />
         <Tab.Screen name="History" component={HistoryPlaceholder} options={{ title: 'Histórico' }} />
         <Tab.Screen name="Music" component={MusicPlaceholder} options={{ title: 'Música' }} />
