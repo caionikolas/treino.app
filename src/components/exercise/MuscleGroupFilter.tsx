@@ -14,7 +14,12 @@ export function MuscleGroupFilter({ value, onChange }: Props) {
     ...MUSCLE_GROUP_ORDER.map(k => ({ key: k, label: MUSCLE_GROUPS[k] })),
   ];
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.scroll}
+      contentContainerStyle={styles.row}
+    >
       {options.map(opt => {
         const active = value === opt.key;
         return (
@@ -32,7 +37,8 @@ export function MuscleGroupFilter({ value, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: spacing.sm },
+  scroll: { flexGrow: 0, flexShrink: 0 },
+  row: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: spacing.sm, alignItems: 'center' },
   chip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

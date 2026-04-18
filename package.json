@@ -21,7 +21,7 @@
     "react-native-screens": "^4.24.0",
     "react-native-uuid": "^2.0.4",
     "react-native-vector-icons": "^10.3.0",
-    "react-native-video": "^6.19.1",
+    "react-native-video": "6.19.1",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
@@ -49,5 +49,14 @@
   },
   "engines": {
     "node": ">= 22.11.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "react-native-video",
+      "react-native-nitro-modules",
+      "@op-engineering/op-sqlite",
+      "react-native-screens",
+      "react-native-reanimated"
+    ]
   }
 }

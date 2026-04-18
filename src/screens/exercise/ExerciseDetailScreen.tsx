@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, SafeAreaView, useWindowDimensions } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useExerciseStore } from '@/store/useExerciseStore';
 import { ExerciseMedia } from '@/components/exercise';
@@ -14,6 +14,8 @@ type Props = NativeStackScreenProps<ExerciseStackParamList, 'ExerciseDetail'>;
 export function ExerciseDetailScreen({ route }: Props) {
   const { exerciseId } = route.params;
   const exercise = useExerciseStore(s => s.findById(exerciseId));
+  const { width } = useWindowDimensions();
+  const mediaSize = width - spacing.md * 2;
 
   if (!exercise) {
     return (
@@ -26,7 +28,9 @@ export function ExerciseDetailScreen({ route }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <ExerciseMedia filename={exercise.mediaFilename} style={styles.media} />
+        <View style={{ marginBottom: spacing.lg, alignItems: 'center' }}>
+          <ExerciseMedia filename={exercise.mediaFilename} size={mediaSize} />
+        </View>
         <Text style={styles.name}>{exercise.name}</Text>
         <View style={styles.badges}>
           <Badge label={labelForMuscleGroup(exercise.muscleGroup)} />

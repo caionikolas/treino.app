@@ -231,6 +231,18 @@ Testes de UI (snapshot ou integração) ficam fora desta fase.
 - **MP4 ausente:** `ExerciseMedia` renderiza placeholder; não é erro
 - **Lista vazia após filtro:** `EmptyState` com mensagem "Nenhum exercício encontrado"
 
+## Known Issues
+
+### Reprodução de vídeo não funciona nesta fase
+
+**Sintoma:** Na tela de detalhe do exercício, o vídeo (`MP4`) não é renderizado visualmente. A view fica com o fundo do placeholder (`colors.primaryLight`).
+
+**Causa raiz:** `react-native-video@6.19.1` não tem suporte completo a Fabric (new architecture). React Native 0.85.1 torna a new arch obrigatória — o flag `newArchEnabled=false` é ignorado. Sem codegen adequado, o ViewManager da lib emite warning `Could not find generated setter for class com.brentvatne.exoplayer.ReactExoplayerViewManager` e props (inclusive `style` com dimensões) não chegam na view nativa → view renderiza com tamanho 0, invisível. Confirmado inclusive que `onLoad` e `onReadyForDisplay` disparam (player processa o vídeo), mas `controls={true}` também não aparece.
+
+**Mitigação nesta fase:** `ExerciseMedia` passa a renderizar apenas um **placeholder com ícone** (sem tentar carregar `<Video>`), evitando overhead e confusão visual. Exercícios com MP4 disponível usam ícone `play-circle-outline`; sem MP4 usam `fitness-center`.
+
+**Resolução planejada:** plano dedicado `docs/superpowers/plans/2026-XX-XX-fix-video-playback.md` — opções: (A) migrar para `react-native-video@7` quando estabilizar (atualmente em beta), (B) downgrade controlado para RN 0.76 (que suporta arquitetura antiga). Executar após v7 estabilizar OU como parte da Fase 4 (Execução), onde vídeo em loop durante séries é mais útil.
+
 ## Entregáveis ao fim da fase
 
 1. Projeto React Native CLI inicializado, rodando em device físico e emulador
