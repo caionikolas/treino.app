@@ -148,4 +148,67 @@ describe('sessionRepository', () => {
     expect(dates.length).toBe(2);
     dates.forEach(d => expect(d).toMatch(/^\d{4}-\d{2}-\d{2}$/));
   });
+
+  it('findById returns SessionDetail with grouped sets', async () => {
+    const session = makeSession();
+    const sets: SessionSet[] = [
+      { id: 'ss-1', sessionId: 's-1', exerciseId: 'ex-1', setNumber: 1, reps: 12, weightKg: 80, completed: 1, notes: null },
+      { id: 'ss-2', sessionId: 's-1', exerciseId: 'ex-1', setNumber: 2, reps: 10, weightKg: 85, completed: 1, notes: null },
+    ];
+    await sessionRepository.insert(session, sets);
+
+    const detail = await sessionRepository.findById('s-1');
+    expect(detail).not.toBeNull();
+    expect(detail!.session.id).toBe('s-1');
+    expect(detail!.workoutName).toBe('Treino');
+    expect(detail!.workoutExists).toBe(true);
+    expect(detail!.setsByExercise.length).toBe(1);
+    expect(detail!.setsByExercise[0].exerciseName).toBe('Test');
+    expect(detail!.setsByExercise[0].sets.length).toBe(2);
+  });
+
+  it('findById returns workoutExists=false when workout was deleted', async () => {
+    await sessionRepository.insert(makeSession(), [makeSet()]);
+    const { getDb } = require('@/database/connection');
+    await getDb().execute('PRAGMA foreign_keys = OFF');
+    await getDb().execute('DELETE FROM workouts WHERE id = ?', ['w-1']);
+    await getDb().execute('PRAGMA foreign_keys = ON');
+
+    const detail = await sessionRepository.findById('s-1');
+    expect(detail).not.toBeNull();
+    expect(detail!.workoutExists).toBe(false);
+    expect(detail!.workoutName).toBe('Treino removido');
+  });
+
+  it('findById returns null for unknown session id', async () => {
+    expect(await sessionRepository.findById('does-not-exist')).toBeNull();
+  });
+
+  it('getStats returns zeros when no sessions', async () => {
+    const stats = await sessionRepository.getStats();
+    expect(stats).toEqual({
+      sessionsThisMonth: 0,
+      avgSessionsPerWeek: 0,
+      avgDurationSeconds: 0,
+      totalSessions: 0,
+    });
+  });
+
+  it('getStats computes basic metrics with sessions', async () => {
+    const now = Date.now();
+    await sessionRepository.insert(
+      makeSession({ id: 's-1', startedAt: now - 1000, finishedAt: now, durationSeconds: 1800 }),
+      [],
+    );
+    await sessionRepository.insert(
+      makeSession({ id: 's-2', startedAt: now - 2000, finishedAt: now, durationSeconds: 2400 }),
+      [],
+    );
+
+    const stats = await sessionRepository.getStats();
+    expect(stats.totalSessions).toBe(2);
+    expect(stats.sessionsThisMonth).toBeGreaterThanOrEqual(2);
+    expect(stats.avgDurationSeconds).toBeCloseTo(2100, 0);
+    expect(stats.avgSessionsPerWeek).toBeGreaterThan(0);
+  });
 });
