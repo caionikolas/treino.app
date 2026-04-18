@@ -33,13 +33,13 @@ Criar, editar, duplicar, apagar treinos. Picker de exercícios multi-add. Reorde
 
 ---
 
-## ⏳ Fase 4 — Execução do treino
+## ✅ Fase 4 — Execução do treino + Favoritar
 
-Tela principal durante o treino: cronômetro geral, timer de descanso com vibração/som, input de carga e reps por série, GIF do exercício (quando o fix de vídeo estiver pronto), navegação entre exercícios, resumo ao finalizar, keep-awake.
+Cronômetro geral, timer de descanso com vibração + som + notificação (via `@notifee/react-native`), input de carga/reps pré-preenchido com última série, navegação entre exercícios, resumo com campo de notas, keep-awake via módulo nativo custom, favoritar treinos com ordenação (migration v2).
 
-**Tabelas:** `workout_sessions` e `session_sets` (já criadas na migration v1).
-**Referência:** `CLAUDE.md` seção "Execução do Treino (tela principal durante o treino)".
-**Status:** A iniciar.
+**Status:** Concluída (2026-04-19)
+**Spec:** `docs/superpowers/specs/2026-04-19-execucao-treino-design.md`
+**Plano:** `docs/superpowers/plans/2026-04-19-execucao-treino.md`
 
 ---
 
