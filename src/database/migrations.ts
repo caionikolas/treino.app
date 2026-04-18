@@ -74,6 +74,12 @@ const MIGRATIONS: Migration[] = [
       )`,
     ],
   },
+  {
+    version: 2,
+    up: [
+      `ALTER TABLE workouts ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0`,
+    ],
+  },
 ];
 
 async function getCurrentVersion(): Promise<number> {
