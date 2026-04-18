@@ -241,7 +241,7 @@ Testes de UI (snapshot ou integração) ficam fora desta fase.
 
 **Mitigação nesta fase:** `ExerciseMedia` passa a renderizar apenas um **placeholder com ícone** (sem tentar carregar `<Video>`), evitando overhead e confusão visual. Exercícios com MP4 disponível usam ícone `play-circle-outline`; sem MP4 usam `fitness-center`.
 
-**Resolução planejada:** plano dedicado `docs/superpowers/plans/2026-XX-XX-fix-video-playback.md` — opções: (A) migrar para `react-native-video@7` quando estabilizar (atualmente em beta), (B) downgrade controlado para RN 0.76 (que suporta arquitetura antiga). Executar após v7 estabilizar OU como parte da Fase 4 (Execução), onde vídeo em loop durante séries é mais útil.
+**Resolução:** problema resolvido pela migração para RN 0.76 — ver `docs/superpowers/specs/2026-04-19-migracao-rn-076-design.md`. `ExerciseMedia` voltou a renderizar `<Video>` normalmente.
 
 ## Entregáveis ao fim da fase
 

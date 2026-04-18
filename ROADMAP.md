@@ -54,6 +54,16 @@ Calendário mensal com dias marcados, lista de sessões por dia, detalhe da sess
 
 ---
 
+## ✅ Fase 5.9 — Migração para React Native 0.76
+
+Downgrade controlado de RN 0.85 → RN 0.76.6 (última versão com old arch suportada). Desbloqueia libs maduras: `react-native-video` (vídeo real), `@react-navigation/material-top-tabs` (top tabs nativos), `react-native-track-player` (viável para Fase 6).
+
+**Status:** Concluída (2026-04-19)
+**Spec:** `docs/superpowers/specs/2026-04-19-migracao-rn-076-design.md`
+**Plano:** `docs/superpowers/plans/2026-04-19-migracao-rn-076.md`
+
+---
+
 ## ⏳ Fase 6 — Player de música
 
 Leitura da biblioteca de mídia do Android, playlists de treino, mini player fixo durante execução, background playback e controles de lock screen via `react-native-track-player`.
