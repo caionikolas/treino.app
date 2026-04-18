@@ -159,4 +159,34 @@ describe('workoutRepository', () => {
   it('findById returns null for unknown id', async () => {
     expect(await workoutRepository.findById('does-not-exist')).toBeNull();
   });
+
+  it('findAllSummaries includes isFavorite and sorts favorites first', async () => {
+    const now = Date.now();
+    const fav = makeWorkout({ id: 'w-fav', name: 'Favorito', updatedAt: now - 1000 });
+    const reg = makeWorkout({ id: 'w-reg', name: 'Regular', updatedAt: now });
+
+    await workoutRepository.insert(fav, [makeExercise({ workoutId: 'w-fav', id: 'we-f1' })]);
+    await workoutRepository.insert(reg, [makeExercise({ workoutId: 'w-reg', id: 'we-r1' })]);
+
+    await workoutRepository.toggleFavorite('w-fav');
+
+    const list = await workoutRepository.findAllSummaries();
+    expect(list.length).toBe(2);
+    expect(list[0].id).toBe('w-fav');
+    expect(list[0].isFavorite).toBe(true);
+    expect(list[1].id).toBe('w-reg');
+    expect(list[1].isFavorite).toBe(false);
+  });
+
+  it('toggleFavorite flips the value', async () => {
+    await workoutRepository.insert(makeWorkout(), [makeExercise()]);
+
+    await workoutRepository.toggleFavorite('w-1');
+    let list = await workoutRepository.findAllSummaries();
+    expect(list[0].isFavorite).toBe(true);
+
+    await workoutRepository.toggleFavorite('w-1');
+    list = await workoutRepository.findAllSummaries();
+    expect(list[0].isFavorite).toBe(false);
+  });
 });

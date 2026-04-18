@@ -27,6 +27,7 @@ interface SummaryRow {
   color: string;
   updated_at: number;
   exercise_count: number;
+  is_favorite: number;
 }
 
 function rowToWorkout(row: WorkoutRow): Workout {
@@ -57,12 +58,12 @@ export const workoutRepository = {
   async findAllSummaries(): Promise<WorkoutSummary[]> {
     const db = getDb();
     const result = await db.execute(
-      `SELECT w.id, w.name, w.color, w.updated_at,
+      `SELECT w.id, w.name, w.color, w.updated_at, w.is_favorite,
               COUNT(we.id) AS exercise_count
        FROM workouts w
        LEFT JOIN workout_exercises we ON we.workout_id = w.id
        GROUP BY w.id
-       ORDER BY w.updated_at DESC`,
+       ORDER BY w.is_favorite DESC, w.updated_at DESC`,
     );
     return (result.rows ?? []).map(r => {
       const row = r as unknown as SummaryRow;
@@ -72,6 +73,7 @@ export const workoutRepository = {
         color: row.color,
         updatedAt: row.updated_at,
         exerciseCount: typeof row.exercise_count === 'number' ? row.exercise_count : 0,
+        isFavorite: row.is_favorite === 1,
       };
     });
   },
@@ -161,5 +163,16 @@ export const workoutRepository = {
   async delete(id: string): Promise<void> {
     const db = getDb();
     await db.execute('DELETE FROM workouts WHERE id = ?', [id]);
+  },
+
+  async toggleFavorite(id: string): Promise<void> {
+    const db = getDb();
+    await db.execute(
+      `UPDATE workouts
+         SET is_favorite = CASE is_favorite WHEN 0 THEN 1 ELSE 0 END,
+             updated_at = ?
+       WHERE id = ?`,
+      [Date.now(), id],
+    );
   },
 };
