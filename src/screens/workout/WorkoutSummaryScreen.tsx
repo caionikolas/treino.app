@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, SafeAreaView, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Button, Input } from '@/components/common';
 import { useActiveSessionStore } from '@/store/useActiveSessionStore';
+import { useHistoryStore } from '@/store/useHistoryStore';
 import { sessionRepository } from '@/database/repositories/sessionRepository';
 import { WorkoutStackParamList } from '@/navigation/WorkoutStack';
 import { colors, spacing, typography } from '@/theme';
@@ -23,6 +24,7 @@ export function WorkoutSummaryScreen({ navigation }: Props) {
   const setNotes = useActiveSessionStore(s => s.setNotes);
   const finalize = useActiveSessionStore(s => s.finalize);
   const reset = useActiveSessionStore(s => s.reset);
+  const invalidateHistory = useHistoryStore(s => s.invalidate);
 
   const [notesInput, setNotesInput] = useState('');
   const [saving, setSaving] = useState(false);
@@ -35,6 +37,7 @@ export function WorkoutSummaryScreen({ navigation }: Props) {
     setNotes(notesInput);
     const { session, sets } = finalize();
     await sessionRepository.insert(session, sets);
+    invalidateHistory();
     reset();
     setSaving(false);
     navigation.popToTop();
