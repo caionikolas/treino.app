@@ -4,6 +4,9 @@ import { WorkoutListScreen } from '@/screens/workout/WorkoutListScreen';
 import { WorkoutFormScreen } from '@/screens/workout/WorkoutFormScreen';
 import { ExercisePickerScreen } from '@/screens/workout/ExercisePickerScreen';
 import { ExerciseInWorkoutScreen } from '@/screens/workout/ExerciseInWorkoutScreen';
+import { WorkoutPreviewScreen } from '@/screens/workout/WorkoutPreviewScreen';
+import { WorkoutExecutionScreen } from '@/screens/workout/WorkoutExecutionScreen';
+import { WorkoutSummaryScreen } from '@/screens/workout/WorkoutSummaryScreen';
 import { colors } from '@/theme';
 
 export type WorkoutStackParamList = {
@@ -31,6 +34,21 @@ export function WorkoutStack() {
         name="WorkoutList"
         component={WorkoutListScreen}
         options={{ title: 'Treinos' }}
+      />
+      <Stack.Screen
+        name="WorkoutPreview"
+        component={WorkoutPreviewScreen}
+        options={{ title: 'Treino' }}
+      />
+      <Stack.Screen
+        name="WorkoutExecution"
+        component={WorkoutExecutionScreen}
+        options={{ title: 'Em andamento', gestureEnabled: false }}
+      />
+      <Stack.Screen
+        name="WorkoutSummary"
+        component={WorkoutSummaryScreen}
+        options={{ title: 'Resumo', gestureEnabled: false, headerBackVisible: false }}
       />
       <Stack.Screen
         name="WorkoutForm"
