@@ -26,6 +26,7 @@ export interface WorkoutSummary {
   color: string;
   exerciseCount: number;
   updatedAt: number;
+  isFavorite: boolean;
 }
 
 export interface DraftExercise {
