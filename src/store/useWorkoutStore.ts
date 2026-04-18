@@ -11,6 +11,7 @@ interface WorkoutState {
   save: (workout: Workout, exercises: WorkoutExercise[], isNew: boolean) => Promise<void>;
   duplicate: (id: string) => Promise<string | null>;
   remove: (id: string) => Promise<void>;
+  toggleFavorite: (id: string) => Promise<void>;
 }
 
 export const useWorkoutStore = create<WorkoutState>((set, get) => ({
@@ -57,6 +58,11 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
   remove: async (id) => {
     await workoutRepository.delete(id);
+    await get().load();
+  },
+
+  toggleFavorite: async (id) => {
+    await workoutRepository.toggleFavorite(id);
     await get().load();
   },
 }));
