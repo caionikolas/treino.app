@@ -6,10 +6,16 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { WorkoutTimer, RestTimer, SetLogRow, ExerciseProgress } from '@/components/session';
 import { Button, EmptyState } from '@/components/common';
+import { MiniPlayer } from '@/components/music';
 import { useActiveSessionStore } from '@/store/useActiveSessionStore';
 import { useIntervalTimer } from '@/hooks/useIntervalTimer';
 import { useKeepAwake } from '@/hooks/useKeepAwake';
-import { showRestFinishedNotification, requestNotificationPermission } from '@/services/notificationService';
+import {
+  showRestFinishedNotification,
+  requestNotificationPermission,
+  showWorkoutOngoing,
+  cancelWorkoutOngoing,
+} from '@/services/notificationService';
 import { WorkoutStackParamList } from '@/navigation/WorkoutStack';
 import { colors, spacing, typography } from '@/theme';
 import { Vibration } from 'react-native';
@@ -51,7 +57,21 @@ export function WorkoutExecutionScreen({ navigation }: Props) {
 
   useEffect(() => {
     requestNotificationPermission();
+    return () => {
+      cancelWorkoutOngoing();
+    };
   }, []);
+
+  useEffect(() => {
+    if (!startedAt || !currentExercise) return;
+    const update = () => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      showWorkoutOngoing({ exerciseName: currentExercise.exerciseName, elapsedSec: elapsed });
+    };
+    update();
+    const interval = setInterval(update, 5000);
+    return () => clearInterval(interval);
+  }, [startedAt, currentExerciseIndex, currentExercise]);
 
   const [now, setNow] = useState(Date.now());
   useIntervalTimer(500, setNow, restEndsAt != null);
@@ -141,7 +161,7 @@ export function WorkoutExecutionScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ExerciseProgress
           exerciseName={currentExercise.exerciseName}
           currentSet={currentSetNumber}
@@ -197,12 +217,14 @@ export function WorkoutExecutionScreen({ navigation }: Props) {
           style={styles.skipBtn}
         />
       </ScrollView>
+      <MiniPlayer />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  scroll: { flex: 1 },
   content: { padding: spacing.md, paddingBottom: spacing.xxl },
   headerBtn: { paddingHorizontal: spacing.sm },
   mediaPlaceholder: {

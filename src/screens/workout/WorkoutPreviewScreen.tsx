@@ -2,11 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, SafeAreaView, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Button, Card, EmptyState } from '@/components/common';
+import { SelectPlaylistModal } from '@/components/music';
 import { workoutRepository } from '@/database/repositories/workoutRepository';
+import { playlistRepository } from '@/database/repositories/playlistRepository';
 import { useActiveSessionStore } from '@/store/useActiveSessionStore';
 import { useExerciseStore } from '@/store/useExerciseStore';
+import { useMusicLibraryStore } from '@/store/useMusicLibraryStore';
+import { usePlayerStore } from '@/store/usePlayerStore';
 import { WorkoutStackParamList } from '@/navigation/WorkoutStack';
 import { Workout, WorkoutExercise } from '@/types/workout';
+import { Track } from '@/types/music';
 import { MuscleGroupKey, labelForMuscleGroup } from '@/constants/muscleGroups';
 import { colors, spacing, typography } from '@/theme';
 
@@ -20,6 +25,9 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
 
   const start = useActiveSessionStore(s => s.start);
   const allExercises = useExerciseStore(s => s.all);
+  const library = useMusicLibraryStore(s => s.tracks);
+  const playQueue = usePlayerStore(s => s.playQueue);
+  const [playlistModalVisible, setPlaylistModalVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -48,7 +56,8 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
     );
   }
 
-  const onStart = () => {
+  const beginSession = () => {
+    if (!workout) return;
     const enriched = exercises.map(e => {
       const info = allExercises.find(x => x.id === e.exerciseId);
       return {
@@ -62,6 +71,34 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
     });
     start(workout.id, enriched);
     navigation.navigate('WorkoutExecution');
+  };
+
+  const onStart = () => {
+    setPlaylistModalVisible(true);
+  };
+
+  const onPlaylistSelected = async (playlistId: string | null) => {
+    setPlaylistModalVisible(false);
+    if (playlistId) {
+      const result = await playlistRepository.findById(playlistId);
+      if (result && result.tracks.length > 0) {
+        const mapped: Track[] = result.tracks
+          .map(pt => {
+            const existing = library.find(t => t.uri === pt.trackUri);
+            return existing ?? {
+              id: pt.id,
+              uri: pt.trackUri,
+              title: pt.trackName,
+              artist: pt.artistName ?? '',
+              album: '',
+              durationMs: pt.durationMs ?? 0,
+              artworkUri: null,
+            };
+          });
+        await playQueue(mapped, 0);
+      }
+    }
+    beginSession();
   };
 
   const onEdit = () => {
@@ -98,6 +135,12 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
           <Button label="Iniciar treino" onPress={onStart} style={styles.actionBtn} disabled={exercises.length === 0} />
         </View>
       </ScrollView>
+
+      <SelectPlaylistModal
+        visible={playlistModalVisible}
+        onClose={() => setPlaylistModalVisible(false)}
+        onSelect={onPlaylistSelected}
+      />
     </SafeAreaView>
   );
 }

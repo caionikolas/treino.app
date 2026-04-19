@@ -5,6 +5,7 @@ import { AppNavigator } from '@/navigation/AppNavigator';
 import { runMigrations } from '@/database/migrations';
 import { runSeeds } from '@/database/seeds/runSeeds';
 import { useExerciseStore } from '@/store/useExerciseStore';
+import { usePlayerStore } from '@/store/usePlayerStore';
 import { setupNotificationChannel } from '@/services/notificationService';
 import { colors } from '@/theme';
 
@@ -12,6 +13,7 @@ function App(): React.JSX.Element {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const loadExercises = useExerciseStore(s => s.load);
+  const initPlayerListeners = usePlayerStore(s => s.initListeners);
 
   useEffect(() => {
     (async () => {
@@ -20,13 +22,14 @@ function App(): React.JSX.Element {
         await runSeeds();
         await loadExercises();
         await setupNotificationChannel();
+        initPlayerListeners();
         setReady(true);
       } catch (e) {
         console.error('Bootstrap failed', e);
         setError(e instanceof Error ? e.message : 'Erro desconhecido');
       }
     })();
-  }, [loadExercises]);
+  }, [loadExercises, initPlayerListeners]);
 
   if (error) {
     return (

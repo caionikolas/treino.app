@@ -5,6 +5,7 @@ import { Button, Input } from '@/components/common';
 import { useActiveSessionStore } from '@/store/useActiveSessionStore';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { sessionRepository } from '@/database/repositories/sessionRepository';
+import { cancelWorkoutOngoing } from '@/services/notificationService';
 import { WorkoutStackParamList } from '@/navigation/WorkoutStack';
 import { colors, spacing, typography } from '@/theme';
 
@@ -39,6 +40,7 @@ export function WorkoutSummaryScreen({ navigation }: Props) {
     await sessionRepository.insert(session, sets);
     invalidateHistory();
     reset();
+    cancelWorkoutOngoing();
     setSaving(false);
     navigation.popToTop();
   };
