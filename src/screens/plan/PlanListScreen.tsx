@@ -1,17 +1,16 @@
 import React, { useEffect, useCallback } from 'react';
-import { View, FlatList, StyleSheet, Pressable, Text } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { View, FlatList, StyleSheet, SafeAreaView, Pressable, Text } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { usePlanStore } from '@/store/usePlanStore';
 import { PlanCard } from '@/components/plan/PlanCard';
 import { PlanStackParamList } from '@/navigation/PlanStack';
 import { colors } from '@/theme';
 
-type Nav = NativeStackNavigationProp<PlanStackParamList, 'PlanList'>;
+type Props = NativeStackScreenProps<PlanStackParamList, 'PlanList'>;
 
-export function PlanListScreen() {
-  const navigation = useNavigation<Nav>();
+export function PlanListScreen({ navigation }: Props) {
   const summaries = usePlanStore(s => s.summaries);
   const load = usePlanStore(s => s.load);
   const reconcileAll = usePlanStore(s => s.reconcileAll);
@@ -27,7 +26,7 @@ export function PlanListScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <FlatList
         data={summaries}
         keyExtractor={item => item.id}
@@ -48,7 +47,7 @@ export function PlanListScreen() {
       >
         <Icon name="add" size={28} color={colors.textPrimary} />
       </Pressable>
-    </View>
+    </SafeAreaView>
   );
 }
 
