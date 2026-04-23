@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PlanListScreen } from '@/screens/plan/PlanListScreen';
 import { PlanFormScreen } from '@/screens/plan/PlanFormScreen';
 import { PlanWorkoutPickerScreen } from '@/screens/plan/PlanWorkoutPickerScreen';
+import { PlanDetailScreen } from '@/screens/plan/PlanDetailScreen';
 import { colors } from '@/theme';
 
 export type PlanStackParamList = {
@@ -30,6 +31,7 @@ export function PlanStack() {
       />
       <Stack.Screen name="PlanForm" component={PlanFormScreen} options={{ title: 'Plano' }} />
       <Stack.Screen name="PlanWorkoutPicker" component={PlanWorkoutPickerScreen} options={{ title: 'Treinos do plano' }} />
+      <Stack.Screen name="PlanDetail" component={PlanDetailScreen} options={{ title: 'Plano' }} />
     </Stack.Navigator>
   );
 }
