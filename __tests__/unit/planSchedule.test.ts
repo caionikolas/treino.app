@@ -2,7 +2,7 @@ import { isRestDay } from '@/utils/planSchedule';
 
 // helper: creates a date on a specific weekday (0=Sunday .. 6=Saturday)
 function dateOnWeekday(weekday: number): Date {
-  const d = new Date(2026, 0, 4); // 4 jan 2026 = domingo
+  const d = new Date(2026, 0, 4); // Jan 4 2026 = Sunday (weekday 0)
   d.setDate(d.getDate() + weekday);
   return d;
 }
@@ -22,9 +22,12 @@ describe('isRestDay', () => {
       expect(isRestDay('mon_to_sat', dateOnWeekday(0))).toBe(true);
     });
     it('returns false Monday through Saturday', () => {
-      for (let w = 1; w <= 6; w++) {
-        expect(isRestDay('mon_to_sat', dateOnWeekday(w))).toBe(false);
-      }
+      expect(isRestDay('mon_to_sat', dateOnWeekday(1))).toBe(false); // Monday
+      expect(isRestDay('mon_to_sat', dateOnWeekday(2))).toBe(false); // Tuesday
+      expect(isRestDay('mon_to_sat', dateOnWeekday(3))).toBe(false); // Wednesday
+      expect(isRestDay('mon_to_sat', dateOnWeekday(4))).toBe(false); // Thursday
+      expect(isRestDay('mon_to_sat', dateOnWeekday(5))).toBe(false); // Friday
+      expect(isRestDay('mon_to_sat', dateOnWeekday(6))).toBe(false); // Saturday
     });
   });
 
@@ -34,9 +37,11 @@ describe('isRestDay', () => {
       expect(isRestDay('mon_to_fri', dateOnWeekday(6))).toBe(true);
     });
     it('returns false Monday through Friday', () => {
-      for (let w = 1; w <= 5; w++) {
-        expect(isRestDay('mon_to_fri', dateOnWeekday(w))).toBe(false);
-      }
+      expect(isRestDay('mon_to_fri', dateOnWeekday(1))).toBe(false); // Monday
+      expect(isRestDay('mon_to_fri', dateOnWeekday(2))).toBe(false); // Tuesday
+      expect(isRestDay('mon_to_fri', dateOnWeekday(3))).toBe(false); // Wednesday
+      expect(isRestDay('mon_to_fri', dateOnWeekday(4))).toBe(false); // Thursday
+      expect(isRestDay('mon_to_fri', dateOnWeekday(5))).toBe(false); // Friday
     });
   });
 });
