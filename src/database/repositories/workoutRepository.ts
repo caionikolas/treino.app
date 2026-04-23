@@ -162,6 +162,15 @@ export const workoutRepository = {
 
   async delete(id: string): Promise<void> {
     const db = getDb();
+    const result = await db.execute(
+      'SELECT COUNT(*) AS c FROM plan_workouts WHERE workout_id = ?',
+      [id],
+    );
+    const row = result.rows?.[0] as { c: number } | undefined;
+    const count = row?.c ?? 0;
+    if (count > 0) {
+      throw new Error(`Este treino faz parte de ${count} plano(s). Remova-o dos planos antes de excluir.`);
+    }
     await db.execute('DELETE FROM workouts WHERE id = ?', [id]);
   },
 

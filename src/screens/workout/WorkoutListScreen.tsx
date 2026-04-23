@@ -41,7 +41,17 @@ export function WorkoutListScreen({ navigation }: Props) {
             'Esta ação não pode ser desfeita.',
             [
               { text: 'Cancelar', style: 'cancel' },
-              { text: 'Apagar', style: 'destructive', onPress: () => remove(id) },
+              {
+                text: 'Apagar',
+                style: 'destructive',
+                onPress: async () => {
+                  try {
+                    await remove(id);
+                  } catch (e) {
+                    Alert.alert('Não foi possível excluir', e instanceof Error ? e.message : 'Erro');
+                  }
+                },
+              },
             ],
           );
         },
