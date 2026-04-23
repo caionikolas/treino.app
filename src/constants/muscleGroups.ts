@@ -4,6 +4,9 @@ export const MUSCLE_GROUPS = {
   shoulder: 'Ombros',
   biceps: 'Bíceps',
   triceps: 'Tríceps',
+  quads: 'Quadríceps',
+  hamstrings: 'Posteriores',
+  glutes: 'Glúteos',
   legs: 'Pernas',
   core: 'Core',
   full_body: 'Corpo Inteiro',
@@ -12,7 +15,7 @@ export const MUSCLE_GROUPS = {
 export type MuscleGroupKey = keyof typeof MUSCLE_GROUPS;
 
 export const MUSCLE_GROUP_ORDER: MuscleGroupKey[] = [
-  'chest', 'back', 'shoulder', 'biceps', 'triceps', 'legs', 'core', 'full_body',
+  'chest', 'back', 'shoulder', 'biceps', 'triceps', 'quads', 'hamstrings', 'glutes', 'legs', 'core', 'full_body',
 ];
 
 export function labelForMuscleGroup(key: string): string {
