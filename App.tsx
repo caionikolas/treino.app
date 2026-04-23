@@ -7,6 +7,7 @@ import { runSeeds } from '@/database/seeds/runSeeds';
 import { useExerciseStore } from '@/store/useExerciseStore';
 import { usePlayerStore } from '@/store/usePlayerStore';
 import { setupNotificationChannel } from '@/services/notificationService';
+import { setupPlanReminderChannel, syncAllReminders } from '@/services/reminderService';
 import { colors } from '@/theme';
 
 function App(): React.JSX.Element {
@@ -22,6 +23,8 @@ function App(): React.JSX.Element {
         await runSeeds();
         await loadExercises();
         await setupNotificationChannel();
+        await setupPlanReminderChannel();
+        await syncAllReminders();
         initPlayerListeners();
         setReady(true);
       } catch (e) {
