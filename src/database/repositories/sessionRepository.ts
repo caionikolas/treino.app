@@ -177,6 +177,27 @@ export const sessionRepository = {
     };
   },
 
+  async findCompletedForWorkoutsSince(
+    workoutIds: string[],
+    since: number,
+  ): Promise<{ workoutId: string; finishedAt: number }[]> {
+    if (workoutIds.length === 0) return [];
+    const db = getDb();
+    const placeholders = workoutIds.map(() => '?').join(',');
+    const result = await db.execute(
+      `SELECT workout_id, finished_at FROM workout_sessions
+       WHERE finished_at IS NOT NULL
+         AND finished_at > ?
+         AND workout_id IN (${placeholders})
+       ORDER BY finished_at ASC`,
+      [since, ...workoutIds],
+    );
+    return (result.rows ?? []).map(r => {
+      const row = r as { workout_id: string; finished_at: number };
+      return { workoutId: row.workout_id, finishedAt: row.finished_at };
+    });
+  },
+
   async getStats(): Promise<StatsData> {
     const db = getDb();
 

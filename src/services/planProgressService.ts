@@ -1,6 +1,6 @@
 import { Plan, PlanStatus } from '@/types/plan';
 import { planRepository } from '@/database/repositories/planRepository';
-import { getDb } from '@/database/connection';
+import { sessionRepository } from '@/database/repositories/sessionRepository';
 
 export interface ProgressInputSession {
   workoutId: string;
@@ -42,7 +42,7 @@ export function computeAdvancement(
 
   for (const s of sorted) {
     if (index >= workoutIds.length) break;
-    if (s.finishedAt <= lastAdvanced) continue;
+    if (s.finishedAt <= lastAdvanced) continue; // boundary also enforced by SQL in reconcilePlan
     if (s.workoutId !== workoutIds[index]) continue;
 
     index += 1;
@@ -64,28 +64,24 @@ export function computeAdvancement(
  */
 export async function reconcilePlan(planId: string): Promise<AdvancementResult | null> {
   const found = await planRepository.findById(planId);
-  if (!found) return null;
+  if (!found) return null; // null = not found
   const { plan, workouts } = found;
-  if (plan.status !== 'active') return null;
+  if (plan.status !== 'active') {
+    // return current state unchanged for non-active plans
+    return {
+      currentIndex: plan.currentIndex,
+      status: plan.status,
+      lastAdvancedAt: plan.lastAdvancedAt,
+      completedAt: plan.completedAt,
+    };
+  }
 
   const workoutIds = workouts.map(w => w.workoutId);
   if (workoutIds.length === 0) return null;
 
+  // SQL uses strict `finished_at > since`; computeAdvancement rechecks `<= lastAdvanced` as a safety guard.
   const since = plan.lastAdvancedAt ?? plan.startedAt ?? 0;
-  const db = getDb();
-  const placeholders = workoutIds.map(() => '?').join(',');
-  const result = await db.execute(
-    `SELECT workout_id, finished_at FROM workout_sessions
-     WHERE finished_at IS NOT NULL
-       AND finished_at > ?
-       AND workout_id IN (${placeholders})
-     ORDER BY finished_at ASC`,
-    [since, ...workoutIds],
-  );
-  const sessions: ProgressInputSession[] = (result.rows ?? []).map(r => {
-    const row = r as { workout_id: string; finished_at: number };
-    return { workoutId: row.workout_id, finishedAt: row.finished_at };
-  });
+  const sessions = await sessionRepository.findCompletedForWorkoutsSince(workoutIds, since);
 
   const next = computeAdvancement(plan, workoutIds, sessions);
   const changed =

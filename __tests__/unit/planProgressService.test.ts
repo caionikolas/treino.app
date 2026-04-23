@@ -1,6 +1,7 @@
 // Mock DB-dependent modules so the pure computeAdvancement function can be tested in isolation
 jest.mock('@/database/connection', () => ({ getDb: jest.fn() }));
 jest.mock('@/database/repositories/planRepository', () => ({ planRepository: {} }));
+jest.mock('@/database/repositories/sessionRepository', () => ({ sessionRepository: {} }));
 
 import { computeAdvancement, ProgressInputSession } from '@/services/planProgressService';
 import { Plan } from '@/types/plan';
@@ -78,5 +79,17 @@ describe('computeAdvancement', () => {
     const result = computeAdvancement(plan({ status: 'idle' }), ['w1', 'w2'], sessions);
     expect(result.currentIndex).toBe(0);
     expect(result.status).toBe('idle');
+  });
+
+  it('uses 0 as cutoff when both lastAdvancedAt and startedAt are null', () => {
+    const sessions: ProgressInputSession[] = [
+      { workoutId: 'w1', finishedAt: 1 },
+    ];
+    const result = computeAdvancement(
+      plan({ lastAdvancedAt: null, startedAt: null }),
+      ['w1', 'w2'],
+      sessions,
+    );
+    expect(result.currentIndex).toBe(1);
   });
 });
