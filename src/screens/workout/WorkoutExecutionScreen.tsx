@@ -1,11 +1,13 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import {
   View, ScrollView, StyleSheet, SafeAreaView, Text, Pressable, Alert, BackHandler,
+  useWindowDimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { WorkoutTimer, RestTimer, SetLogRow, ExerciseProgress } from '@/components/session';
 import { Button, EmptyState } from '@/components/common';
+import { ExerciseMedia } from '@/components/exercise';
 import { MiniPlayer } from '@/components/music';
 import { useActiveSessionStore } from '@/store/useActiveSessionStore';
 import { useIntervalTimer } from '@/hooks/useIntervalTimer';
@@ -24,6 +26,8 @@ type Props = NativeStackScreenProps<WorkoutStackParamList, 'WorkoutExecution'>;
 
 export function WorkoutExecutionScreen({ navigation }: Props) {
   useKeepAwake();
+  const { width } = useWindowDimensions();
+  const mediaSize = width - spacing.md * 2;
 
   const startedAt = useActiveSessionStore(s => s.startedAt);
   const exercises = useActiveSessionStore(s => s.exercises);
@@ -169,8 +173,12 @@ export function WorkoutExecutionScreen({ navigation }: Props) {
           targetReps={currentExercise.targetReps}
         />
 
-        <View style={styles.mediaPlaceholder}>
-          <Icon name="fitness-center" size={64} color={colors.textSecondary} />
+        <View style={styles.mediaWrapper}>
+          <ExerciseMedia
+            filename={currentExercise.mediaFilename}
+            size={mediaSize}
+            paused={restEndsAt != null}
+          />
         </View>
 
         {restEndsAt != null && secondsLeft > 0 ? (
@@ -227,12 +235,8 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: spacing.md, paddingBottom: spacing.xxl },
   headerBtn: { paddingHorizontal: spacing.sm },
-  mediaPlaceholder: {
-    aspectRatio: 1,
-    backgroundColor: colors.primaryLight,
-    borderRadius: 12,
+  mediaWrapper: {
     alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: spacing.md,
   },
   nav: {

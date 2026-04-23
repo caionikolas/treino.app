@@ -20,6 +20,7 @@ interface ActiveSessionState {
       exerciseId: string;
       exerciseName: string;
       muscleGroup: MuscleGroupKey;
+      mediaFilename: string | null;
       sets: number;
       reps: string;
       restSeconds: number;
@@ -68,6 +69,7 @@ export const useActiveSessionStore = create<ActiveSessionState>((set, get) => ({
         exerciseId: e.exerciseId,
         exerciseName: e.exerciseName,
         muscleGroup: e.muscleGroup,
+        mediaFilename: e.mediaFilename,
         targetSets: e.sets,
         targetReps: e.reps,
         restSeconds: e.restSeconds,

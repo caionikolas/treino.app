@@ -24,6 +24,7 @@ export interface ActiveExercise {
   exerciseId: string;
   exerciseName: string;
   muscleGroup: MuscleGroupKey;
+  mediaFilename: string | null;
   targetSets: number;
   targetReps: string;
   restSeconds: number;

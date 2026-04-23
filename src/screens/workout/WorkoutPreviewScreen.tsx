@@ -64,6 +64,7 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
         exerciseId: e.exerciseId,
         exerciseName: info?.name ?? e.exerciseId,
         muscleGroup: (info?.muscleGroup ?? 'chest') as MuscleGroupKey,
+        mediaFilename: info?.mediaFilename ?? null,
         sets: e.sets,
         reps: e.reps,
         restSeconds: e.restSeconds,

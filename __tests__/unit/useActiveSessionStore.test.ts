@@ -6,8 +6,8 @@ describe('useActiveSessionStore', () => {
   });
 
   const sampleExercises = [
-    { exerciseId: 'ex-1', exerciseName: 'Supino', muscleGroup: 'chest' as const, sets: 3, reps: '12', restSeconds: 90 },
-    { exerciseId: 'ex-2', exerciseName: 'Rosca', muscleGroup: 'biceps' as const, sets: 2, reps: '10', restSeconds: 60 },
+    { exerciseId: 'ex-1', exerciseName: 'Supino', muscleGroup: 'chest' as const, mediaFilename: null, sets: 3, reps: '12', restSeconds: 90 },
+    { exerciseId: 'ex-2', exerciseName: 'Rosca', muscleGroup: 'biceps' as const, mediaFilename: null, sets: 2, reps: '10', restSeconds: 60 },
   ];
 
   it('start initializes session state', () => {
