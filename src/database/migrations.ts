@@ -80,6 +80,34 @@ const MIGRATIONS: Migration[] = [
       `ALTER TABLE workouts ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0`,
     ],
   },
+  {
+    version: 3,
+    up: [
+      `CREATE TABLE IF NOT EXISTS plans (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        color TEXT,
+        frequency TEXT NOT NULL,
+        reminder_enabled INTEGER NOT NULL DEFAULT 0,
+        reminder_time TEXT,
+        status TEXT NOT NULL DEFAULT 'idle',
+        current_index INTEGER NOT NULL DEFAULT 0,
+        started_at INTEGER,
+        completed_at INTEGER,
+        last_advanced_at INTEGER,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS plan_workouts (
+        id TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
+        workout_id TEXT NOT NULL REFERENCES workouts(id),
+        order_index INTEGER NOT NULL
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_plan_workouts_plan ON plan_workouts(plan_id, order_index)`,
+    ],
+  },
 ];
 
 async function getCurrentVersion(): Promise<number> {
