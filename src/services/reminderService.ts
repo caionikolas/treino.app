@@ -1,5 +1,5 @@
-import notifee, { AndroidImportance, RepeatFrequency, TriggerType, TimestampTrigger } from '@notifee/react-native';
-import { Plan } from '@/types/plan';
+import notifee, { AndroidImportance, RepeatFrequency, TriggerType, TimestampTrigger, AuthorizationStatus } from '@notifee/react-native';
+import { Plan, PlanWorkout } from '@/types/plan';
 import { planRepository } from '@/database/repositories/planRepository';
 import { isRestDay } from '@/utils/planSchedule';
 import { getDb } from '@/database/connection';
@@ -18,7 +18,7 @@ export async function setupPlanReminderChannel(): Promise<void> {
 
 export async function requestRemindersPermission(): Promise<boolean> {
   const settings = await notifee.requestPermission();
-  return settings.authorizationStatus >= 1;
+  return settings.authorizationStatus >= AuthorizationStatus.AUTHORIZED;
 }
 
 function notificationIdForPlan(planId: string): string {
@@ -37,13 +37,11 @@ function nextOccurrence(hhmm: string, from: Date = new Date()): number {
   return d.getTime();
 }
 
-async function buildBodyForPlan(plan: Plan): Promise<string | null> {
+async function buildBodyForPlan(plan: Plan, workouts: PlanWorkout[]): Promise<string | null> {
   if (plan.status !== 'active') return null;
   const today = new Date();
   if (isRestDay(plan.frequency, today)) return null;
-  const found = await planRepository.findById(plan.id);
-  if (!found) return null;
-  const next = found.workouts[plan.currentIndex];
+  const next = workouts[plan.currentIndex];
   if (!next) return null;
   const db = getDb();
   const result = await db.execute('SELECT name FROM workouts WHERE id = ? LIMIT 1', [next.workoutId]);
@@ -56,7 +54,13 @@ export async function scheduleReminderForPlan(plan: Plan): Promise<void> {
     await cancelReminderForPlan(plan.id);
     return;
   }
-  const body = await buildBodyForPlan(plan);
+  if (plan.status !== 'active') {
+    await cancelReminderForPlan(plan.id);
+    return;
+  }
+  const found = await planRepository.findById(plan.id);
+  const workouts = found?.workouts ?? [];
+  const body = await buildBodyForPlan(plan, workouts);
   const finalBody = body ?? `Lembrete do plano ${plan.name}`;
 
   const trigger: TimestampTrigger = {
@@ -86,19 +90,14 @@ export async function cancelReminderForPlan(planId: string): Promise<void> {
 }
 
 export async function syncAllReminders(): Promise<void> {
-  const active = await planRepository.findAllActive();
   const summaries = await planRepository.findAllSummaries();
   for (const s of summaries) {
-    const isActive = active.some(p => p.id === s.id);
-    if (!isActive || !s.reminderEnabled) {
+    if (s.status !== 'active' || !s.reminderEnabled) {
       await cancelReminderForPlan(s.id);
     }
   }
+  const active = await planRepository.findAllActive();
   for (const p of active) {
-    if (p.reminderEnabled && p.reminderTime) {
-      await scheduleReminderForPlan(p);
-    } else {
-      await cancelReminderForPlan(p.id);
-    }
+    await scheduleReminderForPlan(p);
   }
 }
