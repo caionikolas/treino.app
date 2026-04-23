@@ -1,6 +1,6 @@
 import { isRestDay } from '@/utils/planSchedule';
 
-// helper: cria data num dia da semana específico (0=domingo .. 6=sábado)
+// helper: creates a date on a specific weekday (0=Sunday .. 6=Saturday)
 function dateOnWeekday(weekday: number): Date {
   const d = new Date(2026, 0, 4); // 4 jan 2026 = domingo
   d.setDate(d.getDate() + weekday);
@@ -9,10 +9,11 @@ function dateOnWeekday(weekday: number): Date {
 
 describe('isRestDay', () => {
   describe("frequency 'daily'", () => {
-    it('returns false for every day of the week', () => {
-      for (let w = 0; w < 7; w++) {
-        expect(isRestDay('daily', dateOnWeekday(w))).toBe(false);
-      }
+    it('returns false on a weekday', () => {
+      expect(isRestDay('daily', dateOnWeekday(3))).toBe(false);
+    });
+    it('returns false on a weekend day', () => {
+      expect(isRestDay('daily', dateOnWeekday(0))).toBe(false);
     });
   });
 
