@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PlanListScreen } from '@/screens/plan/PlanListScreen';
+import { PlanFormScreen } from '@/screens/plan/PlanFormScreen';
 import { colors } from '@/theme';
 
 export type PlanStackParamList = {
@@ -26,6 +27,7 @@ export function PlanStack() {
         component={PlanListScreen}
         options={{ title: 'Planos' }}
       />
+      <Stack.Screen name="PlanForm" component={PlanFormScreen} options={{ title: 'Plano' }} />
     </Stack.Navigator>
   );
 }
