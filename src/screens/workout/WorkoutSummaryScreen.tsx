@@ -6,6 +6,8 @@ import { useActiveSessionStore } from '@/store/useActiveSessionStore';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { sessionRepository } from '@/database/repositories/sessionRepository';
 import { cancelWorkoutOngoing } from '@/services/notificationService';
+import { reconcileAllActivePlans } from '@/services/planProgressService';
+import { syncAllReminders } from '@/services/reminderService';
 import { WorkoutStackParamList } from '@/navigation/WorkoutStack';
 import { colors, spacing, typography } from '@/theme';
 
@@ -38,6 +40,8 @@ export function WorkoutSummaryScreen({ navigation }: Props) {
     setNotes(notesInput);
     const { session, sets } = finalize();
     await sessionRepository.insert(session, sets);
+    await reconcileAllActivePlans(session.workoutId);
+    await syncAllReminders();
     invalidateHistory();
     reset();
     cancelWorkoutOngoing();
