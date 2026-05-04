@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, SafeAreaView, useWindowDimensions } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { useExerciseStore } from '@/store/useExerciseStore';
-import { ExerciseMedia } from '@/components/exercise';
+import { ExerciseMedia, ExerciseProgressChart } from '@/components/exercise';
 import { Badge, EmptyState } from '@/components/common';
 import { labelForMuscleGroup } from '@/constants/muscleGroups';
 import { labelForCategory } from '@/constants/categories';
+import { sessionRepository } from '@/database/repositories/sessionRepository';
 import { ExerciseStackParamList } from '@/navigation/ExerciseStack';
 import { colors, spacing, typography } from '@/theme';
 
@@ -16,6 +18,14 @@ export function ExerciseDetailScreen({ route }: Props) {
   const exercise = useExerciseStore(s => s.findById(exerciseId));
   const { width } = useWindowDimensions();
   const mediaSize = width - spacing.md * 2;
+
+  const [progress, setProgress] = useState<Array<{ finishedAt: number; maxWeight: number }>>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      sessionRepository.findExerciseProgress(exerciseId, 8).then(setProgress);
+    }, [exerciseId]),
+  );
 
   if (!exercise) {
     return (
@@ -38,6 +48,11 @@ export function ExerciseDetailScreen({ route }: Props) {
         </View>
         <Text style={styles.sectionTitle}>Como executar</Text>
         <Text style={styles.instructions}>{exercise.instructions}</Text>
+
+        <View style={styles.progressSection}>
+          <Text style={styles.sectionTitle}>Meu progresso</Text>
+          <ExerciseProgressChart points={progress} />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -46,9 +61,9 @@ export function ExerciseDetailScreen({ route }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.md },
-  media: { width: '100%', marginBottom: spacing.lg },
   name: { ...typography.title, color: colors.textPrimary, marginBottom: spacing.sm },
   badges: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
   sectionTitle: { ...typography.heading, color: colors.textPrimary, marginBottom: spacing.sm },
   instructions: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
+  progressSection: { marginTop: spacing.lg },
 });

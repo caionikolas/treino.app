@@ -35,6 +35,8 @@ interface ActiveSessionState {
   adjustRest: (deltaSeconds: number) => void;
   skipRest: () => void;
 
+  adjustTargetSets: (delta: number) => void;
+
   setNotes: (notes: string) => void;
 
   finalize: () => { session: WorkoutSession; sets: SessionSet[] };
@@ -148,6 +150,19 @@ export const useActiveSessionStore = create<ActiveSessionState>((set, get) => ({
   },
 
   skipRest: () => set({ restEndsAt: null }),
+
+  adjustTargetSets: (delta) => {
+    const state = get();
+    const idx = state.currentExerciseIndex;
+    const current = state.exercises[idx];
+    if (!current) return;
+    const completedForExercise = countLoggedForExercise(state.loggedSets, current.exerciseId);
+    const minSets = Math.max(1, completedForExercise);
+    const nextTarget = Math.max(minSets, Math.min(20, current.targetSets + delta));
+    if (nextTarget === current.targetSets) return;
+    const nextExercises = state.exercises.map((e, i) => i === idx ? { ...e, targetSets: nextTarget } : e);
+    set({ exercises: nextExercises });
+  },
 
   setNotes: (notes) => set({ notes }),
 

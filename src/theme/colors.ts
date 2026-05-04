@@ -1,15 +1,15 @@
 export const colors = {
-  primary: '#1A1A2E',
-  primaryLight: '#16213E',
-  accent: '#E94560',
-  accentSecondary: '#0F3460',
-  success: '#00C851',
+  primary: '#1E3031',
+  primaryLight: '#243A3B',
+  accent: '#6ED0D3',
+  accentSecondary: '#4BA5A8',
+  success: '#6ED0D3',
   warning: '#FFBB33',
   textPrimary: '#FFFFFF',
-  textSecondary: '#8E8E93',
-  background: '#0A0A14',
-  surface: '#1A1A2E',
-  border: '#2A2A3E',
+  textSecondary: '#9CB0B1',
+  background: '#1E3031',
+  surface: '#243A3B',
+  border: '#2E4445',
 } as const;
 
 export type ColorKey = keyof typeof colors;

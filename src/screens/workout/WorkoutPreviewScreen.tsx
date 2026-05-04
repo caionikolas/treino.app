@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, SafeAreaView, Text } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, ScrollView, StyleSheet, SafeAreaView, Text, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { Button, Card, EmptyState } from '@/components/common';
 import { SelectPlaylistModal } from '@/components/music';
 import { workoutRepository } from '@/database/repositories/workoutRepository';
@@ -9,6 +10,7 @@ import { useActiveSessionStore } from '@/store/useActiveSessionStore';
 import { useExerciseStore } from '@/store/useExerciseStore';
 import { useMusicLibraryStore } from '@/store/useMusicLibraryStore';
 import { usePlayerStore } from '@/store/usePlayerStore';
+import { useWorkoutDraftStore } from '@/store/useWorkoutDraftStore';
 import { WorkoutStackParamList } from '@/navigation/WorkoutStack';
 import { Workout, WorkoutExercise } from '@/types/workout';
 import { Track } from '@/types/music';
@@ -29,16 +31,28 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
   const playQueue = usePlayerStore(s => s.playQueue);
   const [playlistModalVisible, setPlaylistModalVisible] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const result = await workoutRepository.findById(id);
-      if (result) {
-        setWorkout(result.workout);
-        setExercises(result.exercises);
-      }
-      setLoading(false);
-    })();
+  const load = useCallback(async () => {
+    const result = await workoutRepository.findById(id);
+    if (result) {
+      setWorkout(result.workout);
+      setExercises(result.exercises);
+    }
+    setLoading(false);
   }, [id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        const draft = useWorkoutDraftStore.getState();
+        if (draft.id === id && draft.isDirty()) {
+          const persisted = draft.toPersist();
+          await workoutRepository.update(id, persisted.workout, persisted.exercises);
+          draft.reset();
+        }
+        await load();
+      })();
+    }, [id, load]),
+  );
 
   if (loading) {
     return (
@@ -74,28 +88,25 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
     navigation.navigate('WorkoutExecution');
   };
 
-  const onStart = () => {
-    setPlaylistModalVisible(true);
-  };
+  const onStart = () => setPlaylistModalVisible(true);
 
   const onPlaylistSelected = async (playlistId: string | null) => {
     setPlaylistModalVisible(false);
     if (playlistId) {
       const result = await playlistRepository.findById(playlistId);
       if (result && result.tracks.length > 0) {
-        const mapped: Track[] = result.tracks
-          .map(pt => {
-            const existing = library.find(t => t.uri === pt.trackUri);
-            return existing ?? {
-              id: pt.id,
-              uri: pt.trackUri,
-              title: pt.trackName,
-              artist: pt.artistName ?? '',
-              album: '',
-              durationMs: pt.durationMs ?? 0,
-              artworkUri: null,
-            };
-          });
+        const mapped: Track[] = result.tracks.map(pt => {
+          const existing = library.find(t => t.uri === pt.trackUri);
+          return existing ?? {
+            id: pt.id,
+            uri: pt.trackUri,
+            title: pt.trackName,
+            artist: pt.artistName ?? '',
+            album: '',
+            durationMs: pt.durationMs ?? 0,
+            artworkUri: null,
+          };
+        });
         await playQueue(mapped, 0);
       }
     }
@@ -104,6 +115,22 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
 
   const onEdit = () => {
     navigation.navigate('WorkoutForm', { mode: 'edit', id: workout.id });
+  };
+
+  const onAddExercise = async () => {
+    await useWorkoutDraftStore.getState().loadExisting(id, (exId) => {
+      const found = allExercises.find(e => e.id === exId);
+      return found ? { name: found.name, muscleGroup: found.muscleGroup } : undefined;
+    });
+    navigation.navigate('ExercisePicker');
+  };
+
+  const onTapExercise = async (index: number) => {
+    await useWorkoutDraftStore.getState().loadExisting(id, (exId) => {
+      const found = allExercises.find(e => e.id === exId);
+      return found ? { name: found.name, muscleGroup: found.muscleGroup } : undefined;
+    });
+    navigation.navigate('ExerciseInWorkout', { index });
   };
 
   return (
@@ -117,23 +144,47 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
         </View>
 
         <Text style={styles.sectionTitle}>Exercícios</Text>
-        {exercises.map((e, i) => {
-          const info = allExercises.find(x => x.id === e.exerciseId);
-          return (
-            <Card key={e.id} style={styles.itemCard}>
-              <Text style={styles.itemName} numberOfLines={1}>
-                {i + 1}. {info?.name ?? e.exerciseId}
-              </Text>
-              <Text style={styles.itemSub}>
-                {labelForMuscleGroup(info?.muscleGroup ?? '')} • {e.sets}x{e.reps} • {e.restSeconds}s
-              </Text>
-            </Card>
-          );
-        })}
+        {exercises.length === 0 ? (
+          <View style={styles.empty}>
+            <EmptyState
+              icon="fitness-center"
+              title="Nenhum exercício"
+              subtitle='Toque em "Adicionar exercício" para começar'
+            />
+          </View>
+        ) : (
+          exercises.map((e, i) => {
+            const info = allExercises.find(x => x.id === e.exerciseId);
+            return (
+              <Pressable key={e.id} onPress={() => onTapExercise(i)}>
+                <Card style={styles.itemCard}>
+                  <Text style={styles.itemName} numberOfLines={1}>
+                    {i + 1}. {info?.name ?? e.exerciseId}
+                  </Text>
+                  <Text style={styles.itemSub}>
+                    {labelForMuscleGroup(info?.muscleGroup ?? '')} • {e.sets}x{e.reps} • {e.restSeconds}s
+                  </Text>
+                </Card>
+              </Pressable>
+            );
+          })
+        )}
+
+        <Button
+          label="+ Adicionar exercício"
+          variant="secondary"
+          onPress={onAddExercise}
+          style={styles.addBtn}
+        />
 
         <View style={styles.actions}>
           <Button label="Editar" variant="secondary" onPress={onEdit} style={styles.actionBtn} />
-          <Button label="Iniciar treino" onPress={onStart} style={styles.actionBtn} disabled={exercises.length === 0} />
+          <Button
+            label="Iniciar treino"
+            onPress={onStart}
+            style={styles.actionBtn}
+            disabled={exercises.length === 0}
+          />
         </View>
       </ScrollView>
 
@@ -158,9 +209,11 @@ const styles = StyleSheet.create({
   name: { ...typography.title, color: colors.textPrimary, fontWeight: '700' },
   subtitle: { ...typography.body, color: colors.textPrimary, opacity: 0.9, marginTop: spacing.xs },
   sectionTitle: { ...typography.heading, color: colors.textPrimary, marginBottom: spacing.sm },
+  empty: { minHeight: 160 },
   itemCard: { marginBottom: spacing.sm },
   itemName: { ...typography.body, color: colors.textPrimary, fontWeight: '600' },
   itemSub: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
-  actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
+  addBtn: { marginTop: spacing.md, marginBottom: spacing.lg },
+  actions: { flexDirection: 'row', gap: spacing.sm },
   actionBtn: { flex: 1 },
 });

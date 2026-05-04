@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { DarkTheme, NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -10,6 +11,14 @@ import { MusicStack } from './MusicStack';
 import { colors } from '@/theme';
 
 const Tab = createBottomTabNavigator();
+
+const ICON_BY_ROUTE: Record<string, string> = {
+  Workouts: 'fitness-center',
+  Plans: 'event-note',
+  Exercises: 'sports-gymnastics',
+  History: 'timer',
+  Music: 'music-note',
+};
 
 export function AppNavigator() {
   return (
@@ -30,18 +39,21 @@ export function AppNavigator() {
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarStyle: { backgroundColor: colors.primary, borderTopColor: colors.border },
-          tabBarActiveTintColor: colors.accent,
+          tabBarShowLabel: false,
+          tabBarStyle: styles.tabBar,
+          tabBarItemStyle: styles.tabItem,
+          tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.textSecondary,
-          tabBarIcon: ({ color, size }) => {
-            const iconByRoute: Record<string, string> = {
-              Workouts: 'fitness-center',
-              Plans: 'event-note',
-              Exercises: 'sports-gymnastics',
-              History: 'history',
-              Music: 'music-note',
-            };
-            return <Icon name={iconByRoute[route.name] ?? 'circle'} size={size} color={color} />;
+          tabBarIcon: ({ focused }) => {
+            const name = ICON_BY_ROUTE[route.name] ?? 'circle';
+            if (focused) {
+              return (
+                <View style={styles.activePill}>
+                  <Icon name={name} size={26} color={colors.primary} />
+                </View>
+              );
+            }
+            return <Icon name={name} size={26} color={colors.textSecondary} />;
           },
         })}
       >
@@ -54,3 +66,32 @@ export function AppNavigator() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: colors.primary,
+    borderTopColor: colors.border,
+    borderTopWidth: 0,
+    height: 68,
+    paddingTop: 10,
+    paddingBottom: 10,
+    elevation: 0,
+  },
+  tabItem: {
+    justifyContent: 'center',
+  },
+  activePill: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -8,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+});

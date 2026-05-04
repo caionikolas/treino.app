@@ -234,4 +234,28 @@ export const sessionRepository = {
 
     return { sessionsThisMonth, avgSessionsPerWeek, avgDurationSeconds, totalSessions };
   },
+
+  async findExerciseProgress(
+    exerciseId: string,
+    limit: number = 8,
+  ): Promise<Array<{ finishedAt: number; maxWeight: number }>> {
+    const db = getDb();
+    const result = await db.execute(
+      `SELECT ws.finished_at AS finished_at, MAX(ss.weight_kg) AS max_weight
+       FROM session_sets ss
+       JOIN workout_sessions ws ON ws.id = ss.session_id
+       WHERE ss.exercise_id = ?
+         AND ss.weight_kg IS NOT NULL
+         AND ws.finished_at IS NOT NULL
+         AND ss.completed = 1
+       GROUP BY ws.id
+       ORDER BY ws.finished_at DESC
+       LIMIT ?`,
+      [exerciseId, limit],
+    );
+    const rows = (result.rows ?? []) as Array<{ finished_at: number; max_weight: number }>;
+    return rows
+      .map(r => ({ finishedAt: r.finished_at, maxWeight: r.max_weight }))
+      .reverse();
+  },
 };
