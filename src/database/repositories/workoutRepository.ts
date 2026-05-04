@@ -6,6 +6,8 @@ interface WorkoutRow {
   name: string;
   description: string | null;
   color: string;
+  default_sets: number | null;
+  default_rest_seconds: number | null;
   created_at: number;
   updated_at: number;
 }
@@ -17,7 +19,11 @@ interface WorkoutExerciseRow {
   order_index: number;
   sets: number;
   reps: string;
+  reps_per_set: string | null;
   rest_seconds: number;
+  rest_enabled: number | null;
+  warmup_enabled: number | null;
+  warmup_reps: number | null;
   notes: string | null;
 }
 
@@ -36,20 +42,37 @@ function rowToWorkout(row: WorkoutRow): Workout {
     name: row.name,
     description: row.description,
     color: row.color,
+    defaultSets: row.default_sets ?? 3,
+    defaultRestSeconds: row.default_rest_seconds ?? 90,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
 function rowToExercise(row: WorkoutExerciseRow): WorkoutExercise {
+  let repsPerSet: number[] = [];
+  try {
+    const parsed = JSON.parse(row.reps_per_set ?? '[]');
+    if (Array.isArray(parsed)) {
+      repsPerSet = parsed.filter((n: unknown) => typeof n === 'number' && Number.isFinite(n));
+    }
+  } catch {
+    repsPerSet = [];
+  }
+  const sets = repsPerSet.length || row.sets || 0;
+  const reps = repsPerSet.length > 0 ? repsPerSet.join('-') : (row.reps ?? '');
   return {
     id: row.id,
     workoutId: row.workout_id,
     exerciseId: row.exercise_id,
     orderIndex: row.order_index,
-    sets: row.sets,
-    reps: row.reps,
+    sets,
+    reps,
+    repsPerSet,
     restSeconds: row.rest_seconds,
+    restEnabled: row.rest_enabled === null || row.rest_enabled === undefined ? true : row.rest_enabled !== 0,
+    warmupEnabled: row.warmup_enabled === 1,
+    warmupReps: row.warmup_reps,
     notes: row.notes,
   };
 }
@@ -99,13 +122,15 @@ export const workoutRepository = {
     const db = getDb();
     await db.transaction(async tx => {
       await tx.execute(
-        `INSERT INTO workouts (id, name, description, color, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO workouts (id, name, description, color, default_sets, default_rest_seconds, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           workout.id,
           workout.name,
           workout.description,
           workout.color,
+          workout.defaultSets,
+          workout.defaultRestSeconds,
           workout.createdAt,
           workout.updatedAt,
         ],
@@ -113,16 +138,21 @@ export const workoutRepository = {
       for (const ex of exercises) {
         await tx.execute(
           `INSERT INTO workout_exercises
-             (id, workout_id, exercise_id, order_index, sets, reps, rest_seconds, notes)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+             (id, workout_id, exercise_id, order_index, sets, reps, reps_per_set,
+              rest_seconds, rest_enabled, warmup_enabled, warmup_reps, notes)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             ex.id,
             ex.workoutId,
             ex.exerciseId,
             ex.orderIndex,
-            ex.sets,
-            ex.reps,
+            ex.repsPerSet.length,
+            ex.repsPerSet.join('-') || '0',
+            JSON.stringify(ex.repsPerSet),
             ex.restSeconds,
+            ex.restEnabled ? 1 : 0,
+            ex.warmupEnabled ? 1 : 0,
+            ex.warmupReps,
             ex.notes,
           ],
         );
@@ -135,24 +165,37 @@ export const workoutRepository = {
     await db.transaction(async tx => {
       await tx.execute(
         `UPDATE workouts
-           SET name = ?, description = ?, color = ?, updated_at = ?
+           SET name = ?, description = ?, color = ?, default_sets = ?, default_rest_seconds = ?, updated_at = ?
          WHERE id = ?`,
-        [workout.name, workout.description, workout.color, workout.updatedAt, id],
+        [
+          workout.name,
+          workout.description,
+          workout.color,
+          workout.defaultSets,
+          workout.defaultRestSeconds,
+          workout.updatedAt,
+          id,
+        ],
       );
       await tx.execute('DELETE FROM workout_exercises WHERE workout_id = ?', [id]);
       for (const ex of exercises) {
         await tx.execute(
           `INSERT INTO workout_exercises
-             (id, workout_id, exercise_id, order_index, sets, reps, rest_seconds, notes)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+             (id, workout_id, exercise_id, order_index, sets, reps, reps_per_set,
+              rest_seconds, rest_enabled, warmup_enabled, warmup_reps, notes)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             ex.id,
             id,
             ex.exerciseId,
             ex.orderIndex,
-            ex.sets,
-            ex.reps,
+            ex.repsPerSet.length,
+            ex.repsPerSet.join('-') || '0',
+            JSON.stringify(ex.repsPerSet),
             ex.restSeconds,
+            ex.restEnabled ? 1 : 0,
+            ex.warmupEnabled ? 1 : 0,
+            ex.warmupReps,
             ex.notes,
           ],
         );

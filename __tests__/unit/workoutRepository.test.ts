@@ -74,6 +74,8 @@ function makeWorkout(overrides: Partial<Workout> = {}): Workout {
     name: 'Treino A',
     description: null,
     color: '#E94560',
+    defaultSets: 3,
+    defaultRestSeconds: 90,
     createdAt: now,
     updatedAt: now,
     ...overrides,
@@ -81,14 +83,19 @@ function makeWorkout(overrides: Partial<Workout> = {}): Workout {
 }
 
 function makeExercise(overrides: Partial<WorkoutExercise> = {}): WorkoutExercise {
+  const repsPerSet = overrides.repsPerSet ?? [12, 12, 12, 12];
   return {
     id: 'we-1',
     workoutId: 'w-1',
     exerciseId: 'ex-chest-01',
     orderIndex: 0,
-    sets: 4,
-    reps: '12',
+    sets: repsPerSet.length,
+    reps: repsPerSet.join('-'),
+    repsPerSet,
     restSeconds: 90,
+    restEnabled: true,
+    warmupEnabled: false,
+    warmupReps: null,
     notes: null,
     ...overrides,
   };
@@ -128,12 +135,17 @@ describe('workoutRepository', () => {
 
   it('update replaces workout fields and exercises (delete-all + insert-all)', async () => {
     await workoutRepository.insert(makeWorkout(), [
-      makeExercise({ id: 'we-old', orderIndex: 0, sets: 4 }),
+      makeExercise({ id: 'we-old', orderIndex: 0 }),
     ]);
 
     const updatedWorkout = { ...makeWorkout(), name: 'Renomeado', color: '#00B894' };
     const newExercises = [
-      makeExercise({ id: 'we-new-1', orderIndex: 0, sets: 5, exerciseId: 'ex-chest-02' }),
+      makeExercise({
+        id: 'we-new-1',
+        orderIndex: 0,
+        repsPerSet: [10, 10, 10, 10, 10],
+        exerciseId: 'ex-chest-02',
+      }),
     ];
     await workoutRepository.update('w-1', updatedWorkout, newExercises);
 
@@ -143,6 +155,7 @@ describe('workoutRepository', () => {
     expect(result!.exercises.length).toBe(1);
     expect(result!.exercises[0].id).toBe('we-new-1');
     expect(result!.exercises[0].sets).toBe(5);
+    expect(result!.exercises[0].repsPerSet).toEqual([10, 10, 10, 10, 10]);
   });
 
   it('delete removes workout and cascades to workout_exercises', async () => {
@@ -176,6 +189,29 @@ describe('workoutRepository', () => {
     expect(list[0].isFavorite).toBe(true);
     expect(list[1].id).toBe('w-reg');
     expect(list[1].isFavorite).toBe(false);
+  });
+
+  it('persists and reads v4 fields (repsPerSet, warmup, rest toggle, defaults)', async () => {
+    const workout = makeWorkout({ defaultSets: 4, defaultRestSeconds: 120 });
+    const exercise = makeExercise({
+      repsPerSet: [30, 30, 30],
+      restSeconds: 180,
+      restEnabled: false,
+      warmupEnabled: true,
+      warmupReps: 10,
+    });
+    await workoutRepository.insert(workout, [exercise]);
+
+    const result = await workoutRepository.findById('w-1');
+    expect(result!.workout.defaultSets).toBe(4);
+    expect(result!.workout.defaultRestSeconds).toBe(120);
+    const ex = result!.exercises[0];
+    expect(ex.repsPerSet).toEqual([30, 30, 30]);
+    expect(ex.sets).toBe(3);
+    expect(ex.reps).toBe('30-30-30');
+    expect(ex.restEnabled).toBe(false);
+    expect(ex.warmupEnabled).toBe(true);
+    expect(ex.warmupReps).toBe(10);
   });
 
   it('toggleFavorite flips the value', async () => {

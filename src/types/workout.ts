@@ -5,6 +5,8 @@ export interface Workout {
   name: string;
   description: string | null;
   color: string;
+  defaultSets: number;
+  defaultRestSeconds: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -16,7 +18,11 @@ export interface WorkoutExercise {
   orderIndex: number;
   sets: number;
   reps: string;
+  repsPerSet: number[];
   restSeconds: number;
+  restEnabled: boolean;
+  warmupEnabled: boolean;
+  warmupReps: number | null;
   notes: string | null;
 }
 
@@ -33,7 +39,9 @@ export interface DraftExercise {
   exerciseId: string;
   exerciseName: string;
   muscleGroup: MuscleGroupKey;
-  sets: number;
-  reps: string;
+  repsPerSet: number[];
   restSeconds: number;
+  restEnabled: boolean;
+  warmupEnabled: boolean;
+  warmupReps: number | null;
 }
