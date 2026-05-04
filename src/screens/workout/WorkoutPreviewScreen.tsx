@@ -67,7 +67,7 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
       headerRight: () =>
         workout ? (
           <Pressable onPress={onEdit} hitSlop={8} style={styles.headerBtn}>
-            <MaterialIcons name="edit" size={20} color={colors.accent} />
+            <MaterialIcons name="edit" size={20} color={workout.color} />
           </Pressable>
         ) : null,
     });
@@ -159,7 +159,7 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
             <Text style={styles.headerLabel}>Treino</Text>
             <View style={[styles.swatch, { backgroundColor: workout.color }]} />
           </View>
-          <Text style={styles.headerName} numberOfLines={2}>
+          <Text style={[styles.headerName, { color: workout.color }]} numberOfLines={2}>
             {workout.name}
           </Text>
           <Text style={styles.headerMeta}>{metaLine}</Text>
@@ -189,7 +189,7 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
         <Button
           label="Iniciar treino"
           onPress={onStart}
-          style={styles.cta}
+          style={{ ...styles.cta, backgroundColor: workout.color }}
           disabled={exercises.length === 0}
         />
       </View>
@@ -228,7 +228,6 @@ const styles = StyleSheet.create({
   headerLabel: { ...typography.caption, color: colors.textSecondary },
   swatch: { width: 20, height: 20, borderRadius: 10 },
   headerName: {
-    color: colors.accent,
     fontSize: 28,
     fontWeight: '700',
     marginBottom: spacing.xs,
