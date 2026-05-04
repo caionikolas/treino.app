@@ -7,9 +7,10 @@ interface Props {
   value: string;
   onChangeText: (v: string) => void;
   placeholder?: string;
+  color?: string;
 }
 
-export function WorkoutNameField({ label, value, onChangeText, placeholder }: Props) {
+export function WorkoutNameField({ label, value, onChangeText, placeholder, color }: Props) {
   return (
     <View style={styles.wrap}>
       <Text style={styles.label}>{label}</Text>
@@ -18,7 +19,7 @@ export function WorkoutNameField({ label, value, onChangeText, placeholder }: Pr
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.textSecondary}
-        style={styles.input}
+        style={[styles.input, color ? { color } : null]}
       />
     </View>
   );

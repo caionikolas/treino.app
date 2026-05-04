@@ -29,6 +29,7 @@ export function WorkoutFormFields(props: Props) {
         value={props.name}
         onChangeText={props.onNameChange}
         placeholder="Nome do treino"
+        color={props.color}
       />
 
       <SettingRow

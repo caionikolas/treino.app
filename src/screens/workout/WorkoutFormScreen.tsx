@@ -114,7 +114,7 @@ export function WorkoutFormScreen({ route, navigation }: Props) {
           label={mode === 'new' ? 'Criar treino' : 'Salvar'}
           onPress={canSave ? onSave : () => {}}
           disabled={!canSave}
-          style={styles.cta}
+          style={{ ...styles.cta, backgroundColor: draft.color }}
         />
       </View>
     </SafeAreaView>

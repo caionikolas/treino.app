@@ -16,6 +16,7 @@ type Props = NativeStackScreenProps<WorkoutStackParamList, 'ExerciseInWorkout'>;
 export function ExerciseInWorkoutScreen({ route, navigation }: Props) {
   const { index } = route.params;
   const exercise = useWorkoutDraftStore(s => s.exercises[index]);
+  const workoutColor = useWorkoutDraftStore(s => s.color);
   const updateSetReps = useWorkoutDraftStore(s => s.updateSetReps);
   const addSet = useWorkoutDraftStore(s => s.addSet);
   const removeSet = useWorkoutDraftStore(s => s.removeSet);
@@ -38,7 +39,7 @@ export function ExerciseInWorkoutScreen({ route, navigation }: Props) {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Text style={styles.name}>{exercise.exerciseName}</Text>
+          <Text style={[styles.name, { color: workoutColor }]}>{exercise.exerciseName}</Text>
           <View style={styles.timer}>
             <MaterialIcons name="schedule" size={16} color={colors.textSecondary} />
             <Text style={styles.timerText}>00:00</Text>
@@ -55,14 +56,22 @@ export function ExerciseInWorkoutScreen({ route, navigation }: Props) {
           </Pressable>
 
           <View style={styles.toggleWrap}>
-            <Text style={styles.toggleLabel}>Warm-up</Text>
-            <Toggle value={exercise.warmupEnabled} onChange={() => toggleWarmup(index)} />
+            <Text style={styles.toggleLabel}>Aquecimento</Text>
+            <Toggle
+              value={exercise.warmupEnabled}
+              onChange={() => toggleWarmup(index)}
+              color={workoutColor}
+            />
           </View>
         </View>
 
         <View style={styles.controlRow}>
           <Text style={styles.toggleLabel}>Descanso ativado</Text>
-          <Toggle value={exercise.restEnabled} onChange={() => toggleRest(index)} />
+          <Toggle
+            value={exercise.restEnabled}
+            onChange={() => toggleRest(index)}
+            color={workoutColor}
+          />
         </View>
 
         <View style={styles.tableHeader}>
@@ -96,7 +105,11 @@ export function ExerciseInWorkoutScreen({ route, navigation }: Props) {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button label="Concluir" onPress={() => navigation.goBack()} style={styles.cta} />
+        <Button
+          label="Concluir"
+          onPress={() => navigation.goBack()}
+          style={{ ...styles.cta, backgroundColor: workoutColor }}
+        />
       </View>
 
       <StepperModal
@@ -124,7 +137,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.lg,
   },
-  name: { ...typography.heading, color: colors.accent, fontWeight: '700' },
+  name: { ...typography.heading, fontWeight: '700' },
   timer: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   timerText: { ...typography.body, color: colors.textSecondary, fontVariant: ['tabular-nums'] },
   controlRow: {
