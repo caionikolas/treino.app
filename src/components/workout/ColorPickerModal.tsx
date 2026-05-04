@@ -64,11 +64,10 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
     marginBottom: spacing.lg,
   },
-  cell: { width: '16%', alignItems: 'center', paddingVertical: spacing.xs },
-  swatch: { width: 36, height: 36, borderRadius: 18 },
+  cell: { width: '20%', alignItems: 'center', paddingVertical: spacing.sm },
+  swatch: { width: 40, height: 40, borderRadius: 20 },
   swatchSel: { borderWidth: 2, borderColor: colors.textPrimary },
   save: {
     backgroundColor: colors.textPrimary,
