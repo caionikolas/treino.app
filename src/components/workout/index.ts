@@ -3,3 +3,6 @@ export { WorkoutFormFields } from './WorkoutFormFields';
 export { WorkoutExerciseRow } from './WorkoutExerciseRow';
 export { WorkoutCard } from './WorkoutCard';
 export { FavoriteButton } from './FavoriteButton';
+export { ColorPickerModal } from './ColorPickerModal';
+export { WorkoutNameField } from './WorkoutNameField';
+export { SetRow } from './SetRow';
