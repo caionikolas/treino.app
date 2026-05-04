@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, SafeAreaView, Text, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
-import { Button, Card, EmptyState } from '@/components/common';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { Button, EmptyState, SettingRow } from '@/components/common';
 import { SelectPlaylistModal } from '@/components/music';
 import { workoutRepository } from '@/database/repositories/workoutRepository';
 import { playlistRepository } from '@/database/repositories/playlistRepository';
@@ -14,7 +15,8 @@ import { useWorkoutDraftStore } from '@/store/useWorkoutDraftStore';
 import { WorkoutStackParamList } from '@/navigation/WorkoutStack';
 import { Workout, WorkoutExercise } from '@/types/workout';
 import { Track } from '@/types/music';
-import { MuscleGroupKey, labelForMuscleGroup } from '@/constants/muscleGroups';
+import { MuscleGroupKey } from '@/constants/muscleGroups';
+import { formatRestTime } from '@/utils/formatRestTime';
 import { colors, spacing, typography } from '@/theme';
 
 type Props = NativeStackScreenProps<WorkoutStackParamList, 'WorkoutPreview'>;
@@ -53,6 +55,23 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
       })();
     }, [id, load]),
   );
+
+  const onEdit = useCallback(() => {
+    if (!workout) return;
+    navigation.navigate('WorkoutForm', { mode: 'edit', id: workout.id });
+  }, [navigation, workout]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: workout?.name ?? 'Treino',
+      headerRight: () =>
+        workout ? (
+          <Pressable onPress={onEdit} hitSlop={8} style={styles.headerBtn}>
+            <MaterialIcons name="edit" size={20} color={colors.accent} />
+          </Pressable>
+        ) : null,
+    });
+  }, [navigation, workout, onEdit]);
 
   if (loading) {
     return (
@@ -113,10 +132,6 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
     beginSession();
   };
 
-  const onEdit = () => {
-    navigation.navigate('WorkoutForm', { mode: 'edit', id: workout.id });
-  };
-
   const onAddExercise = async () => {
     await useWorkoutDraftStore.getState().loadExisting(id, (exId) => {
       const found = allExercises.find(e => e.id === exId);
@@ -133,60 +148,51 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
     navigation.navigate('ExerciseInWorkout', { index });
   };
 
+  const exerciseCountLabel = `${exercises.length} ${exercises.length === 1 ? 'exercício' : 'exercícios'}`;
+  const metaLine = `${exerciseCountLabel} · ${workout.defaultSets} séries · ${formatRestTime(workout.defaultRestSeconds)} descanso`;
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.header, { backgroundColor: workout.color }]}>
-          <Text style={styles.name}>{workout.name}</Text>
-          <Text style={styles.subtitle}>
-            {exercises.length} {exercises.length === 1 ? 'exercício' : 'exercícios'}
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.headerCard}>
+          <View style={styles.headerTop}>
+            <Text style={styles.headerLabel}>Treino</Text>
+            <View style={[styles.swatch, { backgroundColor: workout.color }]} />
+          </View>
+          <Text style={styles.headerName} numberOfLines={2}>
+            {workout.name}
           </Text>
+          <Text style={styles.headerMeta}>{metaLine}</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Exercícios</Text>
-        {exercises.length === 0 ? (
-          <View style={styles.empty}>
-            <EmptyState
-              icon="fitness-center"
-              title="Nenhum exercício"
-              subtitle='Toque em "Adicionar exercício" para começar'
-            />
-          </View>
-        ) : (
-          exercises.map((e, i) => {
+        <Text style={styles.sectionTitle}>
+          Exercícios{exercises.length > 0 ? ` (${exercises.length})` : ''}
+        </Text>
+
+        <View style={styles.listCard}>
+          {exercises.map((e, i) => {
             const info = allExercises.find(x => x.id === e.exerciseId);
             return (
-              <Pressable key={e.id} onPress={() => onTapExercise(i)}>
-                <Card style={styles.itemCard}>
-                  <Text style={styles.itemName} numberOfLines={1}>
-                    {i + 1}. {info?.name ?? e.exerciseId}
-                  </Text>
-                  <Text style={styles.itemSub}>
-                    {labelForMuscleGroup(info?.muscleGroup ?? '')} • {e.sets}x{e.reps} • {e.restSeconds}s
-                  </Text>
-                </Card>
-              </Pressable>
+              <SettingRow
+                key={e.id}
+                label={`${i + 1}. ${info?.name ?? e.exerciseId}`}
+                value={`${e.sets}×${e.reps}`}
+                onPress={() => onTapExercise(i)}
+              />
             );
-          })
-        )}
-
-        <Button
-          label="+ Adicionar exercício"
-          variant="secondary"
-          onPress={onAddExercise}
-          style={styles.addBtn}
-        />
-
-        <View style={styles.actions}>
-          <Button label="Editar" variant="secondary" onPress={onEdit} style={styles.actionBtn} />
-          <Button
-            label="Iniciar treino"
-            onPress={onStart}
-            style={styles.actionBtn}
-            disabled={exercises.length === 0}
-          />
+          })}
+          <SettingRow icon="add" label="Adicionar exercício" onPress={onAddExercise} />
         </View>
       </ScrollView>
+
+      <View style={styles.footer}>
+        <Button
+          label="Iniciar treino"
+          onPress={onStart}
+          style={styles.cta}
+          disabled={exercises.length === 0}
+        />
+      </View>
 
       <SelectPlaylistModal
         visible={playlistModalVisible}
@@ -200,20 +206,49 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.md, paddingBottom: spacing.xxl },
-  loading: { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.xl },
-  header: {
-    padding: spacing.lg,
-    borderRadius: 12,
+  loading: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: spacing.xl,
+  },
+  headerCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
     marginBottom: spacing.lg,
   },
-  name: { ...typography.title, color: colors.textPrimary, fontWeight: '700' },
-  subtitle: { ...typography.body, color: colors.textPrimary, opacity: 0.9, marginTop: spacing.xs },
-  sectionTitle: { ...typography.heading, color: colors.textPrimary, marginBottom: spacing.sm },
-  empty: { minHeight: 160 },
-  itemCard: { marginBottom: spacing.sm },
-  itemName: { ...typography.body, color: colors.textPrimary, fontWeight: '600' },
-  itemSub: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
-  addBtn: { marginTop: spacing.md, marginBottom: spacing.lg },
-  actions: { flexDirection: 'row', gap: spacing.sm },
-  actionBtn: { flex: 1 },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  headerLabel: { ...typography.caption, color: colors.textSecondary },
+  swatch: { width: 20, height: 20, borderRadius: 10 },
+  headerName: {
+    color: colors.accent,
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
+  },
+  headerMeta: { ...typography.caption, color: colors.textSecondary },
+  sectionTitle: {
+    ...typography.heading,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  listCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  footer: {
+    padding: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#ffffff10',
+  },
+  cta: { borderRadius: 999 },
+  headerBtn: { paddingHorizontal: spacing.sm },
 });
