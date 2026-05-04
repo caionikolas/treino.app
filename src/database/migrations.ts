@@ -1,4 +1,5 @@
 import { getDb } from './connection';
+import { parseRepsToArray } from '@/utils/parseRepsToArray';
 
 interface Migration {
   version: number;
@@ -108,6 +109,17 @@ const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_plan_workouts_plan ON plan_workouts(plan_id, order_index)`,
     ],
   },
+  {
+    version: 4,
+    up: [
+      `ALTER TABLE workouts ADD COLUMN default_sets INTEGER NOT NULL DEFAULT 3`,
+      `ALTER TABLE workouts ADD COLUMN default_rest_seconds INTEGER NOT NULL DEFAULT 90`,
+      `ALTER TABLE workout_exercises ADD COLUMN reps_per_set TEXT NOT NULL DEFAULT '[]'`,
+      `ALTER TABLE workout_exercises ADD COLUMN warmup_enabled INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE workout_exercises ADD COLUMN warmup_reps INTEGER`,
+      `ALTER TABLE workout_exercises ADD COLUMN rest_enabled INTEGER NOT NULL DEFAULT 1`,
+    ],
+  },
 ];
 
 async function getCurrentVersion(): Promise<number> {
@@ -122,6 +134,21 @@ async function getCurrentVersion(): Promise<number> {
   const row = result.rows?.[0];
   const v = row?.v;
   return typeof v === 'number' ? v : 0;
+}
+
+async function backfillRepsPerSet(): Promise<void> {
+  const db = getDb();
+  const result = await db.execute(
+    `SELECT id, sets, reps FROM workout_exercises WHERE reps_per_set = '[]' OR reps_per_set IS NULL`,
+  );
+  const rows = (result.rows ?? []) as Array<{ id: string; sets: number; reps: string }>;
+  for (const row of rows) {
+    const arr = parseRepsToArray(row.reps, row.sets);
+    await db.execute(
+      'UPDATE workout_exercises SET reps_per_set = ? WHERE id = ?',
+      [JSON.stringify(arr), row.id],
+    );
+  }
 }
 
 export async function runMigrations(): Promise<void> {
@@ -143,4 +170,6 @@ export async function runMigrations(): Promise<void> {
     });
     console.log(`Applied migration v${migration.version}`);
   }
+
+  await backfillRepsPerSet();
 }
