@@ -120,6 +120,25 @@ const MIGRATIONS: Migration[] = [
       `ALTER TABLE workout_exercises ADD COLUMN rest_enabled INTEGER NOT NULL DEFAULT 1`,
     ],
   },
+  {
+    version: 5,
+    up: [
+      `CREATE TABLE IF NOT EXISTS app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )`,
+    ],
+  },
+  {
+    version: 6,
+    up: [
+      `CREATE TABLE IF NOT EXISTS progression_progress (
+        progression_id TEXT PRIMARY KEY,
+        mastery_level INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER NOT NULL
+      )`,
+    ],
+  },
 ];
 
 async function getCurrentVersion(): Promise<number> {
