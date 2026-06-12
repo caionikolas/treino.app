@@ -14,10 +14,10 @@ export function BossCard({ view, onPress }: Props) {
   const pct = maxPoints > 0 ? Math.round((progressPoints / maxPoints) * 100) : 0;
   const statusText = mastered
     ? 'Chefão dominado 🏆'
-    : focusName
-      ? `Foco: ${focusName}`
-      : skillUnlocked
-        ? 'Skill desbloqueada 🎉'
+    : skillUnlocked
+      ? 'Skill desbloqueada 🎉'
+      : focusName
+        ? `Foco: ${focusName}`
         : 'Comece a treinar';
 
   return (
