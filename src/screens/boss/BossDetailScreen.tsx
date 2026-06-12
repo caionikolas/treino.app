@@ -46,7 +46,9 @@ export function BossDetailScreen() {
   const pct = maxPoints > 0 ? Math.round((progressPoints / maxPoints) * 100) : 0;
 
   const onSelect = async (level: MasteryLevel) => {
-    if (!sheetProg) return;
+    if (!sheetProg) {
+      return;
+    }
     const before = useBossStore.getState().getView(id);
     await setLevel(sheetProg.id, level);
     const after = useBossStore.getState().getView(id);
