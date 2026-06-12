@@ -1,6 +1,7 @@
 export { ColorPicker } from './ColorPicker';
 export { WorkoutFormFields } from './WorkoutFormFields';
 export { WorkoutExerciseRow } from './WorkoutExerciseRow';
+export { WorkoutPreviewExerciseRow } from './WorkoutPreviewExerciseRow';
 export { WorkoutCard } from './WorkoutCard';
 export { FavoriteButton } from './FavoriteButton';
 export { ColorPickerModal } from './ColorPickerModal';

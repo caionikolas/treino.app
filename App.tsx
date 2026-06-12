@@ -1,5 +1,7 @@
+import 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StatusBar, StyleSheet, Text } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from '@/navigation/AppNavigator';
 import { runMigrations } from '@/database/migrations';
@@ -7,7 +9,6 @@ import { runSeeds } from '@/database/seeds/runSeeds';
 import { useExerciseStore } from '@/store/useExerciseStore';
 import { usePlayerStore } from '@/store/usePlayerStore';
 import { setupNotificationChannel } from '@/services/notificationService';
-import { setupPlanReminderChannel, syncAllReminders } from '@/services/reminderService';
 import { colors } from '@/theme';
 
 function App(): React.JSX.Element {
@@ -23,8 +24,6 @@ function App(): React.JSX.Element {
         await runSeeds();
         await loadExercises();
         await setupNotificationChannel();
-        await setupPlanReminderChannel();
-        await syncAllReminders();
         initPlayerListeners();
         setReady(true);
       } catch (e) {
@@ -52,14 +51,17 @@ function App(): React.JSX.Element {
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-      <AppNavigator />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <SafeAreaProvider>
+        <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+        <AppNavigator />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   center: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 24 },
   errorText: { color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
 });

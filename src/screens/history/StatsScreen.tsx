@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { StatsCard } from '@/components/history';
-import { EmptyState } from '@/components/common';
+import { StyleSheet, SafeAreaView, ScrollView, View } from 'react-native';
+import { SettingRow, EmptyState } from '@/components/common';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { colors, spacing } from '@/theme';
 
@@ -38,9 +37,28 @@ export function StatsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <StatsCard label="Treinos este mês" value={String(stats.sessionsThisMonth)} />
-        <StatsCard label="Frequência semanal" value={stats.avgSessionsPerWeek.toFixed(1)} />
-        <StatsCard label="Duração média" value={formatDuration(stats.avgDurationSeconds)} />
+        <View style={styles.group}>
+          <SettingRow
+            icon="event-available"
+            label="Treinos este mês"
+            value={String(stats.sessionsThisMonth)}
+          />
+          <SettingRow
+            icon="event-repeat"
+            label="Frequência semanal"
+            value={stats.avgSessionsPerWeek.toFixed(1)}
+          />
+          <SettingRow
+            icon="timer"
+            label="Duração média"
+            value={formatDuration(stats.avgDurationSeconds)}
+          />
+          <SettingRow
+            icon="fitness-center"
+            label="Total de treinos"
+            value={String(stats.totalSessions)}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -48,5 +66,10 @@ export function StatsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md },
+  content: { padding: spacing.md, paddingBottom: spacing.xxl },
+  group: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    paddingBottom: spacing.xs,
+  },
 });

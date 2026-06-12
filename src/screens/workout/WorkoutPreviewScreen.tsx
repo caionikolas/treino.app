@@ -1,9 +1,17 @@
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, SafeAreaView, Text, Pressable } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Text, Pressable, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { Button, EmptyState, SettingRow } from '@/components/common';
+import ReorderableList, {
+  ReorderableListReorderEvent,
+  reorderItems,
+  useReorderableDrag,
+  useIsActive,
+} from 'react-native-reorderable-list';
+import type { ListRenderItemInfo } from 'react-native';
+import { Button, EmptyState } from '@/components/common';
+import { WorkoutPreviewExerciseRow } from '@/components/workout';
 import { SelectPlaylistModal } from '@/components/music';
 import { workoutRepository } from '@/database/repositories/workoutRepository';
 import { playlistRepository } from '@/database/repositories/playlistRepository';
@@ -148,42 +156,95 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
     navigation.navigate('ExerciseInWorkout', { index });
   };
 
+  const onReorder = ({ from, to }: ReorderableListReorderEvent) => {
+    const next = reorderItems(exercises, from, to);
+    setExercises(next);
+    if (!workout) return;
+    const reindexed = next.map((e, i) => ({ ...e, orderIndex: i }));
+    workoutRepository.update(id, workout, reindexed).catch(err => {
+      console.warn('Failed to persist exercise order', err);
+    });
+  };
+
+  const renderItem = ({ item, index }: ListRenderItemInfo<WorkoutExercise>) => {
+    const info = allExercises.find(x => x.id === item.exerciseId);
+    return (
+      <DraggableRow
+        name={info?.name ?? item.exerciseId}
+        info={`${item.sets}×${item.reps}`}
+        onPress={() => onTapExercise(index)}
+        onDelete={() => onDeleteExercise(index)}
+      />
+    );
+  };
+
+  const onDeleteExercise = (index: number) => {
+    const ex = exercises[index];
+    if (!ex) return;
+    const info = allExercises.find(x => x.id === ex.exerciseId);
+    Alert.alert(
+      'Remover exercício?',
+      info?.name ?? 'Este exercício será removido do treino.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Remover',
+          style: 'destructive',
+          onPress: async () => {
+            const draft = useWorkoutDraftStore.getState();
+            await draft.loadExisting(id, (exId) => {
+              const found = allExercises.find(e => e.id === exId);
+              return found ? { name: found.name, muscleGroup: found.muscleGroup } : undefined;
+            });
+            draft.removeExercise(index);
+            const persisted = draft.toPersist();
+            await workoutRepository.update(id, persisted.workout, persisted.exercises);
+            draft.reset();
+            await load();
+          },
+        },
+      ],
+    );
+  };
+
   const exerciseCountLabel = `${exercises.length} ${exercises.length === 1 ? 'exercício' : 'exercícios'}`;
   const metaLine = `${exerciseCountLabel} · ${workout.defaultSets} séries · ${formatRestTime(workout.defaultRestSeconds)} descanso`;
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.headerCard}>
-          <View style={styles.headerTop}>
-            <Text style={styles.headerLabel}>Treino</Text>
-            <View style={[styles.swatch, { backgroundColor: workout.color }]} />
-          </View>
-          <Text style={[styles.headerName, { color: workout.color }]} numberOfLines={2}>
-            {workout.name}
-          </Text>
-          <Text style={styles.headerMeta}>{metaLine}</Text>
-        </View>
-
-        <Text style={styles.sectionTitle}>
-          Exercícios{exercises.length > 0 ? ` (${exercises.length})` : ''}
-        </Text>
-
-        <View style={styles.listCard}>
-          {exercises.map((e, i) => {
-            const info = allExercises.find(x => x.id === e.exerciseId);
-            return (
-              <SettingRow
-                key={e.id}
-                label={`${i + 1}. ${info?.name ?? e.exerciseId}`}
-                value={`${e.sets}×${e.reps}`}
-                onPress={() => onTapExercise(i)}
-              />
-            );
-          })}
-          <SettingRow icon="add" label="Adicionar exercício" onPress={onAddExercise} />
-        </View>
-      </ScrollView>
+      <ReorderableList
+        data={exercises}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.content}
+        renderItem={renderItem}
+        onReorder={onReorder}
+        ListHeaderComponent={
+          <>
+            <View style={styles.headerCard}>
+              <View style={styles.headerTop}>
+                <Text style={styles.headerLabel}>Treino</Text>
+                <View style={[styles.swatch, { backgroundColor: workout.color }]} />
+              </View>
+              <Text style={[styles.headerName, { color: workout.color }]} numberOfLines={2}>
+                {workout.name}
+              </Text>
+              <Text style={styles.headerMeta}>{metaLine}</Text>
+            </View>
+            <Text style={styles.sectionTitle}>
+              Exercícios{exercises.length > 0 ? ` (${exercises.length})` : ''}
+            </Text>
+            <View style={styles.listTopSpacer} />
+          </>
+        }
+        ListFooterComponent={
+          <Pressable onPress={onAddExercise} style={[styles.addRow, styles.addRowCard]}>
+            <MaterialIcons name="add" size={22} color={workout.color} />
+            <Text style={[styles.addRowText, { color: workout.color }]}>
+              Adicionar exercício
+            </Text>
+          </Pressable>
+        }
+      />
 
       <View style={styles.footer}>
         <Button
@@ -200,6 +261,28 @@ export function WorkoutPreviewScreen({ route, navigation }: Props) {
         onSelect={onPlaylistSelected}
       />
     </SafeAreaView>
+  );
+}
+
+interface DraggableRowProps {
+  name: string;
+  info: string;
+  onPress: () => void;
+  onDelete: () => void;
+}
+
+function DraggableRow({ name, info, onPress, onDelete }: DraggableRowProps) {
+  const drag = useReorderableDrag();
+  const isActive = useIsActive();
+  return (
+    <WorkoutPreviewExerciseRow
+      name={name}
+      info={info}
+      isActive={isActive}
+      onPress={onPress}
+      onDelete={onDelete}
+      onDragStart={drag}
+    />
   );
 }
 
@@ -238,11 +321,20 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
-  listCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    overflow: 'hidden',
+  listTopSpacer: { height: spacing.xs },
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    paddingHorizontal: spacing.md,
   },
+  addRowCard: {
+    backgroundColor: colors.surface,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+  },
+  addRowText: { fontSize: 15, fontWeight: '700' },
   footer: {
     padding: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,

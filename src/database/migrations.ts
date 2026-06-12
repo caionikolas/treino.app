@@ -139,6 +139,13 @@ const MIGRATIONS: Migration[] = [
       )`,
     ],
   },
+  {
+    version: 7,
+    up: [
+      `DROP TABLE IF EXISTS plan_workouts`,
+      `DROP TABLE IF EXISTS plans`,
+    ],
+  },
 ];
 
 async function getCurrentVersion(): Promise<number> {

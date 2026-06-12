@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Text, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Button, EmptyState } from '@/components/common';
+import { Button, EmptyState, SettingRow } from '@/components/common';
 import { ExerciseLogGroup } from '@/components/history';
 import { sessionRepository } from '@/database/repositories/sessionRepository';
 import { workoutRepository } from '@/database/repositories/workoutRepository';
@@ -16,14 +16,14 @@ type Props = NativeStackScreenProps<HistoryStackParamList, 'SessionDetail'>;
 
 function formatDate(ms: number): string {
   const d = new Date(ms);
-  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
 function formatDuration(seconds: number | null): string {
   if (seconds == null) return '—';
   const mm = Math.floor(seconds / 60);
   const ss = seconds % 60;
-  return `${mm} min ${ss.toString().padStart(2, '0')}s`;
+  return `${mm}min ${ss.toString().padStart(2, '0')}s`;
 }
 
 export function SessionDetailScreen({ route, navigation }: Props) {
@@ -83,19 +83,24 @@ export function SessionDetailScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.header, { backgroundColor: detail.workoutColor }]}>
-          <Text style={styles.name}>{detail.workoutName}</Text>
-          <Text style={styles.sub}>
-            {formatDate(detail.session.startedAt)} • {formatDuration(detail.session.durationSeconds)}
-          </Text>
-        </View>
-
-        {detail.session.notes ? (
-          <View style={styles.notes}>
-            <Text style={styles.notesLabel}>Notas</Text>
-            <Text style={styles.notesText}>{detail.session.notes}</Text>
+        <View style={styles.nameGroup}>
+          <View style={styles.nameField}>
+            <Text style={styles.nameLabel}>Sessão</Text>
+            <Text style={[styles.nameValue, { color: detail.workoutColor }]} numberOfLines={1}>
+              {detail.workoutName}
+            </Text>
           </View>
-        ) : null}
+
+          <SettingRow icon="event" label="Data" value={formatDate(detail.session.startedAt)} />
+          <SettingRow
+            icon="timer"
+            label="Duração"
+            value={formatDuration(detail.session.durationSeconds)}
+          />
+          {detail.session.notes ? (
+            <SettingRow icon="sticky-note-2" label="Notas" value={detail.session.notes} />
+          ) : null}
+        </View>
 
         <Text style={styles.sectionTitle}>Exercícios</Text>
         {detail.setsByExercise.length === 0 ? (
@@ -110,14 +115,16 @@ export function SessionDetailScreen({ route, navigation }: Props) {
             />
           ))
         )}
+      </ScrollView>
 
+      <View style={styles.footer}>
         <Button
           label="Repetir treino"
           onPress={onRepeat}
           disabled={!detail.workoutExists}
-          style={styles.repeatBtn}
+          style={{ ...styles.cta, backgroundColor: detail.workoutColor }}
         />
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -125,22 +132,40 @@ export function SessionDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.md, paddingBottom: spacing.xxl },
-  header: {
-    padding: spacing.lg,
-    borderRadius: 12,
-    marginBottom: spacing.lg,
-  },
-  name: { ...typography.title, color: colors.textPrimary, fontWeight: '700' },
-  sub: { ...typography.body, color: colors.textPrimary, opacity: 0.9, marginTop: spacing.xs, textTransform: 'capitalize' },
-  notes: {
+  nameGroup: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: spacing.md,
+    borderRadius: 16,
+    paddingBottom: spacing.xs,
     marginBottom: spacing.lg,
   },
-  notesLabel: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.xs },
-  notesText: { ...typography.body, color: colors.textPrimary },
-  sectionTitle: { ...typography.heading, color: colors.textPrimary, marginBottom: spacing.sm },
-  emptyHint: { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginVertical: spacing.lg },
-  repeatBtn: { marginTop: spacing.lg },
+  nameField: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  nameLabel: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.xs },
+  nameValue: {
+    fontSize: 28,
+    fontWeight: '700',
+    paddingVertical: spacing.xs,
+    textTransform: 'capitalize',
+  },
+  sectionTitle: {
+    ...typography.heading,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  emptyHint: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginVertical: spacing.lg,
+  },
+  footer: {
+    padding: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#ffffff10',
+  },
+  cta: { borderRadius: 999 },
 });

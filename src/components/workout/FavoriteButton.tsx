@@ -9,23 +9,29 @@ interface Props {
   size?: number;
 }
 
-export function FavoriteButton({ isFavorite, onToggle, size = 28 }: Props) {
+export function FavoriteButton({ isFavorite, onToggle, size = 22 }: Props) {
   return (
     <Pressable
       onPress={onToggle}
-      hitSlop={8}
+      hitSlop={10}
       style={({ pressed }) => [styles.btn, pressed && styles.pressed]}
     >
       <Icon
-        name={isFavorite ? 'star' : 'star-outline'}
+        name={isFavorite ? 'bookmark' : 'bookmark-border'}
         size={size}
-        color={isFavorite ? '#FFD700' : colors.textPrimary}
+        color={isFavorite ? colors.warning : colors.textSecondary}
       />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  btn: { padding: 4 },
-  pressed: { opacity: 0.7 },
+  btn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pressed: { opacity: 0.6 },
 });
